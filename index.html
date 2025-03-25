@@ -1,23 +1,36 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Interactive map with Leaflet</title>
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
-    <link rel="stylesheet" href="css/leaflet.css">
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div>
+      <h1>Interactive Map with Leaflet</h1>
+      <p>Click on the map to see the coordinates.</p>
+    </div>
+    <div>
+      <select
+        name="select-map-bg"
+        id="map-bg-selector"
+        aria-placeholder="Select a map background"
+      >
+        <option value="ESRI" default>ESRI</option>
+        <option value="TOPO">TOPO</option>
+        <option value="street">Street Map</option>
+        <option value="physical">World Physical</option>
+      </select>
+    </div>
     <div id="my-map"></div>
-    
+
     <script src="js/d3.v6.min.js"></script>
     <script src="js/leaflet.js"></script>
-
 
     <script src="js/main.js"></script>
     <script src="js/leafletMap.js"></script>
 
     <div id="tooltip"></div>
-
-
-</body>
+  </body>
 </html>

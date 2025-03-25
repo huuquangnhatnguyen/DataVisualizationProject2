@@ -35,17 +35,16 @@ class LeafletMap {
     vis.topoAttr =
       'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
-    //Thunderforest Outdoors- requires key... so meh...
-    vis.thOutUrl =
-      "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey={apikey}";
-    vis.thOutAttr =
-      '&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    //Street Map- requires key... so meh...
+    vis.streetMapUrl = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png";
+    vis.streetMapAttr =
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>';
 
-    //Stamen Terrain
-    vis.stUrl =
-      "https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.{ext}";
-    vis.stAttr =
-      'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    //World Physical
+    vis.worldPhysicalUrl =
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}";
+    vis.worldPhysicalAttr =
+      "Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri";
 
     //this is the base map layer, where we are showing the map background
     //**** TO DO - try different backgrounds
@@ -69,7 +68,7 @@ class LeafletMap {
     vis.svg = vis.overlay.select("svg").attr("pointer-events", "auto");
     vis.colorScale = d3
       .scaleLinear()
-      .range(["#ffbaba", "#a70000"])
+      .range(["#ffc100", "#ff0000"])
       .domain(extent)
       .interpolate(d3.interpolateHcl);
     //these are the city locations, displayed as a set of dots
@@ -79,7 +78,8 @@ class LeafletMap {
       .join("circle")
       .attr("fill", (d) => vis.colorScale(d.mag))
       //---- TO DO- color by magnitude
-      // .attr("stroke", "black")
+      .attr("stroke", "black")
+
       //Leaflet has to take control of projecting points.
       //Here we are feeding the latitude and longitude coordinates to
       //leaflet so that it can project them on the coordinates of the view.
@@ -141,7 +141,7 @@ class LeafletMap {
     });
   }
 
-  updateVis() {
+  updateVis(mapBg) {
     let vis = this;
 
     //want to see how zoomed in you are?
@@ -159,6 +159,36 @@ class LeafletMap {
       )
       .attr("fill", (d) => vis.colorScale(d.mag)) //---- TO DO- color by magnitude
       .attr("r", 3);
+    if (mapBg) {
+      console.log(mapBg);
+      //if we are changing the map background, we need to remove the old one and add the new one
+      vis.theMap.removeLayer(vis.base_layer);
+      if (mapBg == "TOPO") {
+        vis.base_layer = L.tileLayer(vis.topoUrl, {
+          id: "topo",
+          attribution: vis.topoAttr,
+        });
+      } else if (mapBg == "street") {
+        vis.base_layer = L.tileLayer(vis.streetMapAttr, {
+          id: "streetMap",
+          attribution: vis.streetMapAttr,
+          ext: "png",
+        });
+      } else if (mapBg == "physical") {
+        vis.base_layer = L.tileLayer(vis.worldPhysicalUrl, {
+          id: "worldPhysical",
+          attribution: vis.worldPhysicalAttr,
+          ext: "png",
+        });
+      } else if (mapBg == "ESRI") {
+        vis.base_layer = L.tileLayer(vis.esriUrl, {
+          id: "esri-image",
+          attribution: vis.esriAttr,
+          ext: "png",
+        });
+      }
+      vis.theMap.addLayer(vis.base_layer);
+    }
   }
 
   renderVis() {

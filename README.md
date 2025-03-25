@@ -4,6 +4,11 @@
 
 ## Project 2: The earth beneath us
 
+## Guideline:
+
+- clone this repo and read the module description
+- read through the Map Tutorial [here](https://docs.google.com/document/d/1-pbd7xuD7Aprm2oecZHX-VAc263pCsSjMs3ONCVTf_Y/edit?tab=t.0)
+
 ### Team Member:
 
 - Nhat Nguyen
