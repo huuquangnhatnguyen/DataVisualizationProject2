@@ -54,3 +54,5 @@ Brushing + Linking: will be used to zoomed in and scanned.
 - 3.10 - 3.16: Pre-Project Preparation: Team members will spend their time to read the documentation, do their own researches and play with leaflet D3.
 - 3.17 - 3.23: Brainstorming and Sketching in the first half, and try to implement our sketches
 - 3.23 - 3.29: Finalizing our design and deploy our product
+
+## new branch
