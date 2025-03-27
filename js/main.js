@@ -7,10 +7,50 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       d.latitude = +d.latitude;
       d.longitude = +d.longitude;
       d.mag = +d.mag;
+      d.depth = +d.depth;
     });
 
     // Initialize chart and then show it
     leafletMap = new LeafletMap({ parentElement: "#my-map" }, data);
+
+    // Create a histogram with 1-unit bins
+    const maxMag = d3.max(data, (d) => d.mag);
+    const minMag = d3.min(data, (d) => d.mag);
+    const magGenHistogram = d3
+      .histogram()
+      .value((d) => d.mag)
+      .thresholds(d3.range(minMag, maxMag + 1, 0.2)); // 1-unit bins
+
+    // Create bins from the data
+    const bins = magGenHistogram(data);
+    const binnedData = bins.map((bin) => ({
+      x0: bin.x0,
+      x1: bin.x1,
+      count: bin.length,
+    }));
+
+    // Pass binnedData to BarChart
+    magChart = new MagChart({ parentElement: "#my-mag-chart" }, binnedData);
+
+    // Process depth bins
+    const maxDepth = d3.max(data, (d) => d.depth);
+    const minDepth = d3.min(data, (d) => d.depth);
+    const depthGenBins = d3
+      .histogram()
+      .value((d) => d.depth)
+      .thresholds(d3.range(minDepth, maxDepth, 45)); // 50km bins up to 700km
+
+    const depthBins = depthGenBins(data);
+    const depthData = depthBins.map((bin) => ({
+      x0: bin.x0,
+      x1: bin.x1,
+      count: bin.length,
+    }));
+
+    depthChart = new DepthChart(
+      { parentElement: "#my-depth-chart" },
+      depthData
+    );
   })
   .catch((error) => console.error(error));
 
