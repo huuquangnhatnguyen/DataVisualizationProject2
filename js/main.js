@@ -8,6 +8,12 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       d.longitude = +d.longitude;
       d.mag = +d.mag;
       d.depth = +d.depth;
+
+      d.start = new Date(d.time);
+      d.end = new Date(d.updated);
+
+      // Calculate duration in days
+      d.duration = (d.end - d.start) / (1000 * 60 * 60 * 24);
     });
 
     // Initialize chart and then show it
@@ -50,6 +56,25 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
     depthChart = new DepthChart(
       { parentElement: "#my-depth-chart" },
       depthData
+    );
+
+    const maxDuration = d3.max(data, (d) => d.duration);
+    const minDuration = d3.min(data, (d) => d.duration);
+    const durationGenBins = d3
+      .histogram()
+      .value((d) => d.duration)
+      .thresholds(d3.range(minDuration, maxDuration, 10)); // 1-day bins
+
+    const durationBins = durationGenBins(data);
+    const durationData = durationBins.map((bin) => ({
+      x0: bin.x0,
+      x1: bin.x1,
+      count: bin.length,
+    }));
+
+    durationChart = new DurationChart(
+      { parentElement: "#my-duration-chart" },
+      durationData
     );
   })
   .catch((error) => console.error(error));
