@@ -22,3 +22,10 @@
 #map-bg-selector {
   margin-bottom: 10px;
 }
+
+.map-by-attributes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
