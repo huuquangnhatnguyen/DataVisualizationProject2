@@ -23,13 +23,29 @@
         <option value="physical">World Physical</option>
       </select>
     </div>
+
+    <!-- Map container -->
     <div id="my-map"></div>
+
+    <!-- Timeline of Earthquake Occurrunces  -->
+    <section class="bubble-chart-section"></section>
+    <div class="tooltip" id="tooltip"></div>
+
+    <svg id="bubble-chart"></svg>
+    <div id="guide">You can try to drag and mouseover the bubbles for more information</div>
+    
+    <!--Button for ordered layout-->
+    <button id="ordered-button">Ordered</button>
+
+    <!--Button for packed layout-->
+    <button id="packed-button">Packed</button>
 
     <script src="js/d3.v6.min.js"></script>
     <script src="js/leaflet.js"></script>
 
     <script src="js/main.js"></script>
     <script src="js/leafletMap.js"></script>
+    <script src="js/bubbleChart.js"></script>
 
     <div id="tooltip"></div>
   </body>
