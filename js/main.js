@@ -29,8 +29,8 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       {
         parentElement: "#bubble-chart",
         containerWidth: 800,
-        containerHeight: 600,
-        margin: { top: 40, right: 20, bottom: 60, left: 60 },
+        containerHeight: 700,
+        margin: { top: 40, right: 20, bottom: 40, left: 60 },
       },
       bubbleData
     );
@@ -51,4 +51,3 @@ const mapSelectEventListener = (event) => {
 document
   .getElementById("map-bg-selector")
   .addEventListener("change", mapSelectEventListener);
-  
