@@ -10,15 +10,16 @@ class BarChart {
       containerWidth: config.containerWidth || 600,
       containerHeight: config.containerHeight || 600,
       margin: { top: 20, right: 20, bottom: 40, left: 50 },
-      field: options.field || "mag", // Data field to visualize
-      label: options.label || "Magnitude", // Axis label
-      color: options.color || "steelblue", // Base color
-      binStep: options.binStep || 0.5, // Bin size/step
-      units: options.units || "", // Measurement units
-      hoverColor: options.hoverColor || "orange", // Hover color
+      field: options.field || "mag",
+      label: options.label || "Magnitude",
+      color: options.color || "steelblue",
+      binStep: options.binStep || 0.5,
+      units: options.units || "",
+      hoverColor: options.hoverColor || "orange",
+      onBinSelected: options.onBinSelected || null, // Added: callback for bin selection
     };
-
     this.rawData = rawData;
+    this.selectedBins = []; // Added: track selected bins
     this.initVis();
   }
 
@@ -144,31 +145,68 @@ class BarChart {
       )
       .attr("y", (d) => vis.yScale(d.count))
       .attr("height", (d) => vis.height - vis.yScale(d.count))
-      .attr("fill", vis.config.color)
+      .attr("fill", (d) => {
+        // Modified: check if bin is selected
+        return vis.selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)
+          ? vis.config.hoverColor
+          : vis.config.color;
+      })
       .on("mouseover", function (event, d) {
-        d3.select(this).attr("fill", vis.config.hoverColor);
+        // Modified: only change color if not selected
+        if (!vis.selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)) {
+          d3.select(this).attr("fill", vis.config.hoverColor);
+        }
         vis.showTooltip(event, d);
       })
-      .on("mouseout", function () {
-        d3.select(this).attr("fill", vis.config.color);
+      .on("mouseout", function (event, d) {
+        // Modified: only revert if not selected
+        if (!vis.selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)) {
+          d3.select(this).attr("fill", vis.config.color);
+        }
         vis.hideTooltip();
       })
       .on("mousemove", (event) => {
-        //position the tooltip
         d3.select("#tooltip")
           .style("left", event.pageX + 10 + "px")
           .style("top", event.pageY + 10 + "px");
+      })
+      .on("click", function (event, d) {
+        // Added: click handler for bin selection
+        if (vis.config.onBinSelected) {
+          vis.config.onBinSelected(
+            {
+              field: vis.config.field,
+              x0: d.x0,
+              x1: d.x1,
+            },
+            event
+          );
+        }
       });
+  }
+
+  // Modified updateSelectedBins to handle empty arrays better
+  updateSelectedBins(selectedBins = []) {
+    // Added default parameter
+    const vis = this;
+    vis.selectedBins = selectedBins;
+    vis.svg
+      .selectAll(".bar")
+      .attr("fill", (d) =>
+        selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)
+          ? vis.config.hoverColor
+          : vis.config.color
+      );
   }
 
   showTooltip(event, d) {
     const vis = this;
     const tooltipContent = `
-        <strong>${vis.config.label}:</strong> ${d.x0.toFixed(1)}-${d.x1.toFixed(
+          <strong>${vis.config.label}:</strong> ${d.x0.toFixed(
       1
-    )}${vis.config.units}<br>
-        <strong>Count:</strong> ${d.count}
-      `;
+    )}-${d.x1.toFixed(1)}${vis.config.units}<br>
+          <strong>Count:</strong> ${d.count}
+        `;
 
     d3.select("#tooltip")
       .style("opacity", 1)

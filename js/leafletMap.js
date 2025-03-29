@@ -112,6 +112,7 @@ class LeafletMap {
             `<div class="tooltip-label">
             <b>Location:</b> ${d.place} <br>
             <b>Magnitude:</b> ${d.mag} <br>
+            <b>Depth:</b> ${d.depth} km <br>
             <b>Time:</b> ${Date(d.time)} <br>
             <b>Lattitude</b> ${d.latitude} <br>
             <b>Longitude</b> ${d.longitude} <br>
@@ -138,10 +139,11 @@ class LeafletMap {
     //handler here for updating the map, as you zoom in and out
     vis.theMap.on("zoomend", function () {
       vis.updateVis();
+      vis.updateFilter(vis.selectedBins);
     });
   }
 
-  updateVis(mapBg) {
+  updateVis(mapBg, selectedBins = { mag: [], depth: [] }) {
     let vis = this;
 
     //want to see how zoomed in you are?
@@ -189,6 +191,27 @@ class LeafletMap {
       }
       vis.theMap.addLayer(vis.base_layer);
     }
+
+    vis.Dots.attr(
+      "cx",
+      (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
+    )
+      .attr(
+        "cy",
+        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
+      )
+      .attr("fill", (d) => vis.colorScale(d.mag))
+      .attr("r", 3)
+      // Added: opacity based on bin selection
+      .attr("opacity", (d) => {
+        const magMatch =
+          selectedBins.mag.length === 0 ||
+          selectedBins.mag.some((b) => d.mag >= b.x0 && d.mag < b.x1);
+        const depthMatch =
+          selectedBins.depth.length === 0 ||
+          selectedBins.depth.some((b) => d.depth >= b.x0 && d.depth < b.x1);
+        return magMatch && depthMatch ? 1 : 0.01;
+      });
   }
 
   renderVis() {
