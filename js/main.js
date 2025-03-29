@@ -48,6 +48,7 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
 
     // Initialize chart and then show it
     leafletMap = new LeafletMap({ parentElement: "#my-map" }, data);
+    // map = new MapVis({ parentElement: "#map2" }, data);
 
     new BarChart({ parentElement: "#my-mag-chart" }, data, {
       field: "mag",

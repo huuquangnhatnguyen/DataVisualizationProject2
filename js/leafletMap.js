@@ -36,9 +36,10 @@ class LeafletMap {
       'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
     //Street Map- requires key... so meh...
-    vis.streetMapUrl = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png";
+    vis.streetMapUrl =
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
     vis.streetMapAttr =
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>';
+      "Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012";
 
     //World Physical
     vis.worldPhysicalUrl =
@@ -169,10 +170,9 @@ class LeafletMap {
           attribution: vis.topoAttr,
         });
       } else if (mapBg == "street") {
-        vis.base_layer = L.tileLayer(vis.streetMapAttr, {
+        vis.base_layer = L.tileLayer(vis.streetMapUrl, {
           id: "streetMap",
           attribution: vis.streetMapAttr,
-          ext: "png",
         });
       } else if (mapBg == "physical") {
         vis.base_layer = L.tileLayer(vis.worldPhysicalUrl, {
