@@ -32,6 +32,27 @@ function handleBinSelected(bin, event) {
   leafletMap.updateVis(null, selectedBins);
 }
 
+const handleContinentChange = (event) => {
+  const selectedContinent = event.target.value;
+  // Update map with the selected continent
+  // leafletMap.updateVis(selectedContinent);
+  leafletMap.updateVis(null, {}, selectedContinent);
+};
+
+function filterDataByContinent(data, continent) {
+  if (!continent) return data; // No filtering
+
+  return data.filter((d) => d.continent === continent);
+}
+
+const mapSelectEventListener = (event) => {
+  // Get the selected value from the dropdown
+  const selectedValue = event.target.value;
+  // console.log(selectedValue);
+  // Call the function to update the map with the selected value
+  leafletMap.updateVis(selectedValue);
+};
+
 // Modified: store chart instances
 let magChart, depthChart;
 
@@ -102,14 +123,6 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       onBinSelected: handleBinSelected,
     });
 
-    const mapSelectEventListener = (event) => {
-      // Get the selected value from the dropdown
-      const selectedValue = event.target.value;
-      // console.log(selectedValue);
-      // Call the function to update the map with the selected value
-      leafletMap.updateVis(selectedValue);
-    };
-
     function handleBinSelection(field, x0, x1, isSelected) {
       const bin = { field, x0, x1 };
       if (isSelected) {
@@ -175,3 +188,7 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
 document
   .getElementById("map-bg-selector")
   .addEventListener("change", mapSelectEventListener);
+
+document
+  .getElementById("continent-selector")
+  .addEventListener("change", handleContinentChange);
