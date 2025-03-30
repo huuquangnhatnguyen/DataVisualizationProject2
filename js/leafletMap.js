@@ -10,6 +10,8 @@ class LeafletMap {
     };
     this.data = _data;
     this.selectedBubbles = new Set(); // Track selected bubbles
+    this.selectedContinent = "";
+    this.selectedBins = { mag: [], depth: [] };
     this.initVis();
   }
 
@@ -157,6 +159,24 @@ class LeafletMap {
 
       vis.updateMapDots();
     });
+
+    document.addEventListener("continentChange", (event) => {
+      const { selectedContinent } = event.detail;
+
+      if (selectedContinent) {
+        vis.selectedContinent = selectedContinent;
+      }
+      vis.updateMapDotsByContinent(selectedContinent);
+    });
+
+    document.addEventListener("binChange", (event) => {
+      const { selectedBins } = event.detail;
+
+      if (selectedBins.depth.length > 0 || selectedBins.mag.length > 0) {
+        vis.selectedBins = selectedBins;
+      }
+      vis.updateMapDotsOnBinChange(selectedBins);
+    });
   }
 
   updateMapDots() {
@@ -180,7 +200,7 @@ class LeafletMap {
           return 1;
         }
       }
-      return 0.2;
+      return 0;
     }).attr("r", (d) => {
       const dotDate = new Date(d.time);
       const dotYear = dotDate.getFullYear();
@@ -206,12 +226,25 @@ class LeafletMap {
   // Update the map visualization based on continent
   updateMapDotsByContinent(continent) {
     let vis = this;
-    console.log(continent);
     // Update opacity based on continent selection
     vis.Dots.attr("opacity", (d) => {
       if (!continent) return 1; // No filtering
 
       return d.Continent === continent ? 1 : 0;
+    });
+  }
+
+  // Update the map visualization based on bin changes
+  updateMapDotsOnBinChange(selectedBins) {
+    let vis = this;
+    vis.Dots.attr("opacity", (d) => {
+      const magSelected = selectedBins.mag.some(
+        (bin) => d.mag >= bin.x0 && d.mag <= bin.x1
+      );
+      const depthSelected = selectedBins.depth.some(
+        (bin) => d.depth >= bin.x0 && d.depth <= bin.x1
+      );
+      return magSelected || depthSelected ? 1 : 0;
     });
   }
 
@@ -264,23 +297,6 @@ class LeafletMap {
         });
       }
       vis.theMap.addLayer(vis.base_layer);
-    }
-
-    // Update opacity based on continent selection
-    if (continent) {
-      vis.updateMapDotsByContinent(continent);
-    }
-    //update dots based on selected bins
-    if (selectedBins.depth.length > 0 || selectedBins.mag.length > 0) {
-      vis.Dots.attr("opacity", (d) => {
-        const magSelected = selectedBins.mag.some(
-          (bin) => d.mag >= bin.x0 && d.mag <= bin.x1
-        );
-        const depthSelected = selectedBins.depth.some(
-          (bin) => d.depth >= bin.x0 && d.depth <= bin.x1
-        );
-        return magSelected || depthSelected ? 1 : 0;
-      });
     }
   }
 

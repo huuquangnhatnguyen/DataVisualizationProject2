@@ -1,3 +1,19 @@
+// Month names array
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 class bubbleChart {
   /**
    * @param {Object} _config
@@ -14,37 +30,18 @@ class bubbleChart {
 
     // Data array
     this.data = _data;
+    this.uniqueYears = [];
 
     // Default to Packed Mode
     this.isPackedMode = true;
 
     // Initialize the visualization
     this.initVis();
-
-    
   }
 
   initVis() {
     let vis = this; // Keep a reference to `this` in case we nest functions
-
-    // Month names array
-    const MONTH_NAMES = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
-    const uniqueYears = [...new Set(vis.data.map((d) => d.year))];
-
+    console.log(vis.data);
     // Define chart dimensions
     vis.width =
       vis.config.containerWidth -
@@ -54,6 +51,8 @@ class bubbleChart {
       vis.config.containerHeight -
       vis.config.margin.top -
       vis.config.margin.bottom;
+
+    vis.uniqueYears = [...new Set(vis.data.map((d) => d.year))];
 
     // Select the <svg> element, set its size
     vis.svg = d3
@@ -87,7 +86,23 @@ class bubbleChart {
         "transform",
         `translate(${vis.config.margin.left}, ${vis.config.margin.top})`
       );
+    vis.renderVis();
+  }
 
+  updateVis(newData) {
+    const vis = this;
+    if (newData) {
+      vis.data = newData;
+      console.log(vis.data);
+
+      // use `.raise()` on the labels to keep them atop the circles
+      vis.circles.remove();
+      vis.labels.remove();
+      vis.renderVis();
+    }
+  }
+  renderVis() {
+    const vis = this;
     // Create scales
     // Radius scale based on count_of_ref
     vis.rScale = d3
@@ -98,7 +113,7 @@ class bubbleChart {
     // Color scale for each uniqueYear
     vis.colorScale = d3
       .scaleOrdinal()
-      .domain(uniqueYears)
+      .domain(vis.uniqueYears)
       .range(d3.schemeTableau10);
 
     // use `.raise()` on the labels to keep them atop the circles
@@ -107,7 +122,10 @@ class bubbleChart {
       .data(vis.data)
       .enter()
       .append("circle")
-      .attr("r", (d) => vis.rScale(d.count_of_ref))
+      .attr("r", (d) => {
+        console.log(vis.rScale(d.count_of_ref));
+        return vis.rScale(d.count_of_ref);
+      })
       .attr("fill", (d) => vis.colorScale(d.year))
       .attr("opacity", 0.7);
 
@@ -264,33 +282,32 @@ class bubbleChart {
         .attr("r", vis.rScale.range()[0])
         .attr("cy", (d) => yScale(d.count_of_ref))
         .attr("fill", (d) => vis.colorScale(d.year))
-        .on("end", function() {
+        .on("end", function () {
           // Add click handler after transition is complete
-          d3.select(this)
-            .on("click", function(event, d) {
-              event.stopPropagation();
-              
-              // Toggle selection
-              const isSelected = d3.select(this).classed("selected");
-              d3.select(this).classed("selected", !isSelected);
-              
-              // Update fill color based on selection
-              d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("fill", !isSelected ? "orange" : vis.colorScale(d.year));
-              
-              // Dispatch custom event with selected data
-              const customEvent = new CustomEvent("bubbleSelected", {
-                detail: {
-                  year: d.year,
-                  month: d.month,
-                  count: d.count_of_ref,
-                  selected: !isSelected
-                }
-              });
-              document.dispatchEvent(customEvent);
+          d3.select(this).on("click", function (event, d) {
+            event.stopPropagation();
+
+            // Toggle selection
+            const isSelected = d3.select(this).classed("selected");
+            d3.select(this).classed("selected", !isSelected);
+
+            // Update fill color based on selection
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("fill", !isSelected ? "orange" : vis.colorScale(d.year));
+
+            // Dispatch custom event with selected data
+            const customEvent = new CustomEvent("bubbleSelected", {
+              detail: {
+                year: d.year,
+                month: d.month,
+                count: d.count_of_ref,
+                selected: !isSelected,
+              },
             });
+            document.dispatchEvent(customEvent);
+          });
         });
 
       // Update labels position and add click handler
@@ -299,23 +316,22 @@ class bubbleChart {
         .duration(600)
         .attr("x", (d) => xScale(new Date(d.year, d.month - 1)))
         .attr("y", (d) => yScale(d.count_of_ref))
-        .on("end", function() {
+        .on("end", function () {
           // Add click handler after transition is complete
-          d3.select(this)
-            .on("click", function(event, d) {
-              event.stopPropagation();
-              
-              // Find and click the corresponding circle
-              const circle = vis.circles.filter(circleData => 
+          d3.select(this).on("click", function (event, d) {
+            event.stopPropagation();
+
+            // Find and click the corresponding circle
+            const circle = vis.circles.filter(
+              (circleData) =>
                 circleData.year === d.year && circleData.month === d.month
-              );
-              if (circle.node()) {
-                circle.dispatch("click");
-              }
-            });
+            );
+            if (circle.node()) {
+              circle.dispatch("click");
+            }
+          });
         });
     });
-
     // "Packed" layout button
     d3.select("#packed-button").on("click", () => {
       // Enable drag events
@@ -343,6 +359,4 @@ class bubbleChart {
       drawSizeLegend(vis);
     });
   }
-
-  updateVis() {}
 }

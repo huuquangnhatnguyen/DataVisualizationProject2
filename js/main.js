@@ -3,6 +3,26 @@ let selectedBins = {
   depth: [],
 };
 
+function createBubbleChartData(data) {
+  let bubbleData = [];
+  let grouped = d3.rollups(
+    data,
+    (v) => v.length,
+    (d) => d.date.getFullYear(),
+    (d) => d.date.getMonth() + 1
+  );
+  grouped.forEach(([year, arrMonths]) => {
+    arrMonths.forEach(([month, count]) => {
+      bubbleData.push({
+        year: +year,
+        month: +month,
+        count_of_ref: count,
+      });
+    });
+  });
+  return bubbleData;
+}
+
 // Added: bin selection handler
 function handleBinSelected(bin, event) {
   const field = bin.field;
@@ -29,27 +49,24 @@ function handleBinSelected(bin, event) {
   } else if (field === "depth") {
     depthChart.updateSelectedBins(selectedBins.depth);
   }
-  leafletMap.updateVis(null, selectedBins);
-}
 
-const handleContinentChange = (event) => {
-  const selectedContinent = event.target.value;
-  // Update map with the selected continent
-  // leafletMap.updateVis(selectedContinent);
-  leafletMap.updateVis(null, {}, selectedContinent);
-};
+  // event created to change map dot due to bin change
+  const binChangeEvent = new CustomEvent("binChange", {
+    detail: {
+      selectedBins: selectedBins,
+    },
+  });
+  document.dispatchEvent(binChangeEvent);
+}
 
 function filterDataByContinent(data, continent) {
   if (!continent) return data; // No filtering
-
-  return data.filter((d) => d.continent === continent);
+  return data.filter((d) => d.Continent === continent);
 }
 
 const mapSelectEventListener = (event) => {
   // Get the selected value from the dropdown
   const selectedValue = event.target.value;
-  // console.log(selectedValue);
-  // Call the function to update the map with the selected value
   leafletMap.updateVis(selectedValue);
 };
 
@@ -70,23 +87,23 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
     });
 
     // Initialize the bubbleChart timeline
-    let grouped = d3.rollups(
-      data,
-      (v) => v.length,
-      (d) => d.date.getFullYear(),
-      (d) => d.date.getMonth() + 1
-    );
+    // let grouped = d3.rollups(
+    //   data,
+    //   (v) => v.length,
+    //   (d) => d.date.getFullYear(),
+    //   (d) => d.date.getMonth() + 1
+    // );
     //console.log(grouped);
-    let bubbleData = [];
-    grouped.forEach(([year, arrMonths]) => {
-      arrMonths.forEach(([month, count]) => {
-        bubbleData.push({
-          year: +year,
-          month: +month,
-          count_of_ref: count,
-        });
-      });
-    });
+    let bubbleData = createBubbleChartData(data);
+    // grouped.forEach(([year, arrMonths]) => {
+    //   arrMonths.forEach(([month, count]) => {
+    //     bubbleData.push({
+    //       year: +year,
+    //       month: +month,
+    //       count_of_ref: count,
+    //     });
+    //   });
+    // });
 
     let myBubbleChart = new bubbleChart(
       {
@@ -123,45 +140,26 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       onBinSelected: handleBinSelected,
     });
 
-    function handleBinSelection(field, x0, x1, isSelected) {
-      const bin = { field, x0, x1 };
-      if (isSelected) {
-        selectedBins.push(bin);
-      } else {
-        selectedBins = selectedBins.filter(
-          (b) => !(b.field === field && b.x0 === x0 && b.x1 === x1)
-        );
-      }
+    // filter data by continent
+    const handleContinentChange = (event) => {
+      const selectedContinent = event.target.value;
+      // Update map with the selected continent
+      const dataByContinent = filterDataByContinent(data, selectedContinent);
+      const updatedBubbleData = createBubbleChartData(dataByContinent);
+      console.log(dataByContinent, updatedBubbleData);
+      // feed new data to other charts
+      magChart.updateVis(dataByContinent);
+      depthChart.updateVis(dataByContinent);
+      myBubbleChart.updateVis(updatedBubbleData);
 
-      const filteredData = filterData(selectedBins, data);
-
-      // Update other visualizations
-      myBubbleChart.updateVis(filteredData);
-      leafletMap.updateVis(null, filteredData);
-      magChart.updateBarColors();
-      depthChart.updateBarColors();
-
-      // Update depth and mag charts with filtered data from other fields
-      if (field === "mag") {
-        depthChart.updateData(filteredData);
-      } else {
-        magChart.updateData(filteredData);
-      }
-    }
-
-    function filterData(selectedBins, data) {
-      const groupedByField = selectedBins.reduce((acc, bin) => {
-        if (!acc[bin.field]) acc[bin.field] = [];
-        acc[bin.field].push(bin);
-        return acc;
-      }, {});
-
-      return data.filter((d) =>
-        Object.entries(groupedByField).every(([field, bins]) =>
-          bins.some((bin) => d[field] >= bin.x0 && d[field] < bin.x1)
-        )
-      );
-    }
+      // trigger event to filter map point by continent
+      const continentChangeEvent = new CustomEvent("continentChange", {
+        detail: {
+          selectedContinent: selectedContinent,
+        },
+      });
+      document.dispatchEvent(continentChangeEvent);
+    };
 
     // Added: Reset filters function
     function resetFilters() {
@@ -183,12 +181,11 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
     document
       .getElementById("reset-button")
       .addEventListener("click", resetFilters);
+    document
+      .getElementById("continent-selector")
+      .addEventListener("change", handleContinentChange);
   });
 
 document
   .getElementById("map-bg-selector")
   .addEventListener("change", mapSelectEventListener);
-
-document
-  .getElementById("continent-selector")
-  .addEventListener("change", handleContinentChange);
