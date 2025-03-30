@@ -9,6 +9,7 @@ class LeafletMap {
       parentElement: _config.parentElement,
     };
     this.data = _data;
+    this.selectedBubbles = new Set(); // Track selected bubbles
     this.initVis();
   }
 
@@ -141,6 +142,62 @@ class LeafletMap {
       vis.updateVis();
       vis.updateFilter(vis.selectedBins);
     });
+
+    // Add event listener for bubble selection
+    document.addEventListener("bubbleSelected", (event) => {
+      const { year, month, selected } = event.detail;
+      const date = new Date(year, month - 1);
+      
+      if (selected) {
+        vis.selectedBubbles.add(date.getTime());
+      } else {
+        vis.selectedBubbles.delete(date.getTime());
+      }
+      
+      vis.updateMapDots();
+    });
+  }
+
+  updateMapDots() {
+    let vis = this;
+    
+    vis.Dots
+      .attr("opacity", d => {
+        const dotDate = new Date(d.time);
+        const dotYear = dotDate.getFullYear();
+        const dotMonth = dotDate.getMonth() + 1;
+        
+        // If no bubbles are selected, show all dots
+        if (vis.selectedBubbles.size === 0) return 1;
+        
+        // Check if this dot's date matches any selected bubble
+        for (const timestamp of vis.selectedBubbles) {
+          const selectedDate = new Date(timestamp);
+          if (selectedDate.getFullYear() === dotYear && 
+              selectedDate.getMonth() === dotDate.getMonth()) {
+            return 1;
+          }
+        }
+        return 0.2;
+      })
+      .attr("r", d => {
+        const dotDate = new Date(d.time);
+        const dotYear = dotDate.getFullYear();
+        const dotMonth = dotDate.getMonth() + 1;
+        
+        // If no bubbles are selected, show all dots at normal size
+        if (vis.selectedBubbles.size === 0) return 3;
+        
+        // Check if this dot's date matches any selected bubble
+        for (const timestamp of vis.selectedBubbles) {
+          const selectedDate = new Date(timestamp);
+          if (selectedDate.getFullYear() === dotYear && 
+              selectedDate.getMonth() === dotDate.getMonth()) {
+            return 3;
+          }
+        }
+        return 2;
+      });
   }
 
   updateVis(mapBg, selectedBins = { mag: [], depth: [] }) {
@@ -161,6 +218,10 @@ class LeafletMap {
       )
       .attr("fill", (d) => vis.colorScale(d.mag)) //---- TO DO- color by magnitude
       .attr("r", 3);
+
+    // Update opacity and size based on selection
+    vis.updateMapDots();
+
     if (mapBg) {
       console.log(mapBg);
       //if we are changing the map background, we need to remove the old one and add the new one
