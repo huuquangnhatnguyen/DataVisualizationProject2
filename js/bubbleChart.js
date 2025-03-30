@@ -15,11 +15,13 @@ class bubbleChart {
     // Data array
     this.data = _data;
 
+    // Default to Packed Mode
+    this.isPackedMode = true;
+
     // Initialize the visualization
     this.initVis();
 
-    // Default to Packed Mode
-    this.isPackedMode = true;
+    
   }
 
   initVis() {
@@ -213,9 +215,6 @@ class bubbleChart {
       // y-scale based on count_of_ref
       const yScale = d3
         .scaleLinear()
-        // .domain([0, d3.max(vis.data, d => d.count_of_ref)])
-        // .range([vis.height, 0])
-        // .nice();
         .domain([250, 2500]) // hardcoding the domain to ensure consistency
         .clamp(true)
         .range([vis.height, 0]);
@@ -247,7 +246,6 @@ class bubbleChart {
       vis.chart
         .append("g")
         .attr("class", "y-axis")
-        // .call(d3.axisLeft(yScale).ticks(5))
         .call(yAxis)
         .append("text")
         .attr("transform", "rotate(-90)")
@@ -258,19 +256,64 @@ class bubbleChart {
         .style("text-anchor", "middle")
         .text("Number of Earthquakes per Month");
 
+      // Update circles position and add click handler
       vis.circles
         .transition()
         .duration(600)
         .attr("cx", (d) => xScale(new Date(d.year, d.month - 1)))
         .attr("r", vis.rScale.range()[0])
         .attr("cy", (d) => yScale(d.count_of_ref))
-        .attr("fill", (d) => vis.colorScale(d.year));
+        .attr("fill", (d) => vis.colorScale(d.year))
+        .on("end", function() {
+          // Add click handler after transition is complete
+          d3.select(this)
+            .on("click", function(event, d) {
+              event.stopPropagation();
+              
+              // Toggle selection
+              const isSelected = d3.select(this).classed("selected");
+              d3.select(this).classed("selected", !isSelected);
+              
+              // Update fill color based on selection
+              d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("fill", !isSelected ? "orange" : vis.colorScale(d.year));
+              
+              // Dispatch custom event with selected data
+              const customEvent = new CustomEvent("bubbleSelected", {
+                detail: {
+                  year: d.year,
+                  month: d.month,
+                  count: d.count_of_ref,
+                  selected: !isSelected
+                }
+              });
+              document.dispatchEvent(customEvent);
+            });
+        });
 
+      // Update labels position and add click handler
       vis.labels
         .transition()
         .duration(600)
         .attr("x", (d) => xScale(new Date(d.year, d.month - 1)))
-        .attr("y", (d) => yScale(d.count_of_ref));
+        .attr("y", (d) => yScale(d.count_of_ref))
+        .on("end", function() {
+          // Add click handler after transition is complete
+          d3.select(this)
+            .on("click", function(event, d) {
+              event.stopPropagation();
+              
+              // Find and click the corresponding circle
+              const circle = vis.circles.filter(circleData => 
+                circleData.year === d.year && circleData.month === d.month
+              );
+              if (circle.node()) {
+                circle.dispatch("click");
+              }
+            });
+        });
     });
 
     // "Packed" layout button
