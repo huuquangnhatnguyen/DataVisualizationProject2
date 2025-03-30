@@ -10,6 +10,8 @@ class LeafletMap {
     };
     this.data = _data;
     this.selectedBubbles = new Set(); // Track selected bubbles
+    this.selectedContinent = "";
+    this.selectedBins = { mag: [], depth: [] };
     this.initVis();
   }
 
@@ -37,9 +39,10 @@ class LeafletMap {
       'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
     //Street Map- requires key... so meh...
-    vis.streetMapUrl = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png";
+    vis.streetMapUrl =
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
     vis.streetMapAttr =
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">Humanitarian OpenStreetMap Team</a> hosted by <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap France</a>';
+      "Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012";
 
     //World Physical
     vis.worldPhysicalUrl =
@@ -147,60 +150,105 @@ class LeafletMap {
     document.addEventListener("bubbleSelected", (event) => {
       const { year, month, selected } = event.detail;
       const date = new Date(year, month - 1);
-      
+
       if (selected) {
         vis.selectedBubbles.add(date.getTime());
       } else {
         vis.selectedBubbles.delete(date.getTime());
       }
-      
+
       vis.updateMapDots();
+    });
+
+    document.addEventListener("continentChange", (event) => {
+      const { selectedContinent } = event.detail;
+
+      if (selectedContinent) {
+        vis.selectedContinent = selectedContinent;
+      }
+      vis.updateMapDotsByContinent(selectedContinent);
+    });
+
+    document.addEventListener("binChange", (event) => {
+      const { selectedBins } = event.detail;
+
+      if (selectedBins.depth.length > 0 || selectedBins.mag.length > 0) {
+        vis.selectedBins = selectedBins;
+      }
+      vis.updateMapDotsOnBinChange(selectedBins);
     });
   }
 
   updateMapDots() {
     let vis = this;
-    
-    vis.Dots
-      .attr("opacity", d => {
-        const dotDate = new Date(d.time);
-        const dotYear = dotDate.getFullYear();
-        const dotMonth = dotDate.getMonth() + 1;
-        
-        // If no bubbles are selected, show all dots
-        if (vis.selectedBubbles.size === 0) return 1;
-        
-        // Check if this dot's date matches any selected bubble
-        for (const timestamp of vis.selectedBubbles) {
-          const selectedDate = new Date(timestamp);
-          if (selectedDate.getFullYear() === dotYear && 
-              selectedDate.getMonth() === dotDate.getMonth()) {
-            return 1;
-          }
+
+    vis.Dots.attr("opacity", (d) => {
+      const dotDate = new Date(d.time);
+      const dotYear = dotDate.getFullYear();
+      const dotMonth = dotDate.getMonth() + 1;
+
+      // If no bubbles are selected, show all dots
+      if (vis.selectedBubbles.size === 0) return 1;
+
+      // Check if this dot's date matches any selected bubble
+      for (const timestamp of vis.selectedBubbles) {
+        const selectedDate = new Date(timestamp);
+        if (
+          selectedDate.getFullYear() === dotYear &&
+          selectedDate.getMonth() === dotDate.getMonth()
+        ) {
+          return 1;
         }
-        return 0.2;
-      })
-      .attr("r", d => {
-        const dotDate = new Date(d.time);
-        const dotYear = dotDate.getFullYear();
-        const dotMonth = dotDate.getMonth() + 1;
-        
-        // If no bubbles are selected, show all dots at normal size
-        if (vis.selectedBubbles.size === 0) return 3;
-        
-        // Check if this dot's date matches any selected bubble
-        for (const timestamp of vis.selectedBubbles) {
-          const selectedDate = new Date(timestamp);
-          if (selectedDate.getFullYear() === dotYear && 
-              selectedDate.getMonth() === dotDate.getMonth()) {
-            return 3;
-          }
+      }
+      return 0;
+    }).attr("r", (d) => {
+      const dotDate = new Date(d.time);
+      const dotYear = dotDate.getFullYear();
+      const dotMonth = dotDate.getMonth() + 1;
+
+      // If no bubbles are selected, show all dots at normal size
+      if (vis.selectedBubbles.size === 0) return 3;
+
+      // Check if this dot's date matches any selected bubble
+      for (const timestamp of vis.selectedBubbles) {
+        const selectedDate = new Date(timestamp);
+        if (
+          selectedDate.getFullYear() === dotYear &&
+          selectedDate.getMonth() === dotDate.getMonth()
+        ) {
+          return 3;
         }
-        return 2;
-      });
+      }
+      return 2;
+    });
   }
 
-  updateVis(mapBg, selectedBins = { mag: [], depth: [] }) {
+  // Update the map visualization based on continent
+  updateMapDotsByContinent(continent) {
+    let vis = this;
+    // Update opacity based on continent selection
+    vis.Dots.attr("opacity", (d) => {
+      if (!continent) return 1; // No filtering
+
+      return d.Continent === continent ? 1 : 0;
+    });
+  }
+
+  // Update the map visualization based on bin changes
+  updateMapDotsOnBinChange(selectedBins) {
+    let vis = this;
+    vis.Dots.attr("opacity", (d) => {
+      const magSelected = selectedBins.mag.some(
+        (bin) => d.mag >= bin.x0 && d.mag <= bin.x1
+      );
+      const depthSelected = selectedBins.depth.some(
+        (bin) => d.depth >= bin.x0 && d.depth <= bin.x1
+      );
+      return magSelected || depthSelected ? 1 : 0;
+    });
+  }
+
+  updateVis(mapBg, selectedBins = { mag: [], depth: [] }, continent) {
     let vis = this;
 
     //want to see how zoomed in you are?
@@ -221,9 +269,8 @@ class LeafletMap {
 
     // Update opacity and size based on selection
     vis.updateMapDots();
-
+    // Update map background if specified
     if (mapBg) {
-      console.log(mapBg);
       //if we are changing the map background, we need to remove the old one and add the new one
       vis.theMap.removeLayer(vis.base_layer);
       if (mapBg == "TOPO") {
@@ -232,10 +279,9 @@ class LeafletMap {
           attribution: vis.topoAttr,
         });
       } else if (mapBg == "street") {
-        vis.base_layer = L.tileLayer(vis.streetMapAttr, {
+        vis.base_layer = L.tileLayer(vis.streetMapUrl, {
           id: "streetMap",
           attribution: vis.streetMapAttr,
-          ext: "png",
         });
       } else if (mapBg == "physical") {
         vis.base_layer = L.tileLayer(vis.worldPhysicalUrl, {
@@ -252,27 +298,6 @@ class LeafletMap {
       }
       vis.theMap.addLayer(vis.base_layer);
     }
-
-    vis.Dots.attr(
-      "cx",
-      (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
-    )
-      .attr(
-        "cy",
-        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
-      )
-      .attr("fill", (d) => vis.colorScale(d.mag))
-      .attr("r", 3)
-      // Added: opacity based on bin selection
-      .attr("opacity", (d) => {
-        const magMatch =
-          selectedBins.mag.length === 0 ||
-          selectedBins.mag.some((b) => d.mag >= b.x0 && d.mag < b.x1);
-        const depthMatch =
-          selectedBins.depth.length === 0 ||
-          selectedBins.depth.some((b) => d.depth >= b.x0 && d.depth < b.x1);
-        return magMatch && depthMatch ? 1 : 0.01;
-      });
   }
 
   renderVis() {

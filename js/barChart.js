@@ -239,4 +239,12 @@ class BarChart {
       .attr("y", -35)
       .text("Count");
   }
+  updateVis(newData) {
+    const vis = this;
+    vis.rawData = newData;
+    // Process raw data into bins
+    vis.processData();
+    vis.createScales();
+    vis.drawBars();
+  }
 }

@@ -26,10 +26,27 @@
         <option value="physical">World Physical</option>
       </select>
       <button id="reset-button">Reset Filters</button>
+      <select name="select-continent" id="continent-selector">
+        <option value="AF">Africa</option>
+        <!-- <option value="AN">Antarctica</option> -->
+        <option value="AS">Asia</option>
+        <option value="EU">Europe</option>
+        <option value="NA">North America</option>
+        <option value="OC">Oceania</option>
+        <option value="Unknown">Others</option>
+        <!-- <option value="SA">South America</option> -->
+      </select>
+      <select name="select-plate" id="select-plate">
+        <option value=""></option>
+      </select>
     </div>
 
     <!-- Map container -->
-    <div id="my-map"></div>
+    <div class="map-container">
+      <div id="my-map"></div>
+      <!-- <div id="map2"></div> -->
+    </div>
+
     <div class="map-by-attributes">
       <div id="my-mag-chart"></div>
       <div id="my-depth-chart"></div>
