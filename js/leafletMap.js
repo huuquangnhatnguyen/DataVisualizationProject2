@@ -9,6 +9,7 @@ class LeafletMap {
       parentElement: _config.parentElement,
     };
     this.data = _data;
+    this.selectedBubbles = new Set(); // Track selected bubbles
     this.initVis();
   }
 
@@ -113,6 +114,7 @@ class LeafletMap {
             `<div class="tooltip-label">
             <b>Location:</b> ${d.place} <br>
             <b>Magnitude:</b> ${d.mag} <br>
+            <b>Depth:</b> ${d.depth} km <br>
             <b>Time:</b> ${Date(d.time)} <br>
             <b>Lattitude</b> ${d.latitude} <br>
             <b>Longitude</b> ${d.longitude} <br>
@@ -139,10 +141,67 @@ class LeafletMap {
     //handler here for updating the map, as you zoom in and out
     vis.theMap.on("zoomend", function () {
       vis.updateVis();
+      vis.updateFilter(vis.selectedBins);
+    });
+
+    // Add event listener for bubble selection
+    document.addEventListener("bubbleSelected", (event) => {
+      const { year, month, selected } = event.detail;
+      const date = new Date(year, month - 1);
+      
+      if (selected) {
+        vis.selectedBubbles.add(date.getTime());
+      } else {
+        vis.selectedBubbles.delete(date.getTime());
+      }
+      
+      vis.updateMapDots();
     });
   }
 
-  updateVis(mapBg) {
+  updateMapDots() {
+    let vis = this;
+    
+    vis.Dots
+      .attr("opacity", d => {
+        const dotDate = new Date(d.time);
+        const dotYear = dotDate.getFullYear();
+        const dotMonth = dotDate.getMonth() + 1;
+        
+        // If no bubbles are selected, show all dots
+        if (vis.selectedBubbles.size === 0) return 1;
+        
+        // Check if this dot's date matches any selected bubble
+        for (const timestamp of vis.selectedBubbles) {
+          const selectedDate = new Date(timestamp);
+          if (selectedDate.getFullYear() === dotYear && 
+              selectedDate.getMonth() === dotDate.getMonth()) {
+            return 1;
+          }
+        }
+        return 0.2;
+      })
+      .attr("r", d => {
+        const dotDate = new Date(d.time);
+        const dotYear = dotDate.getFullYear();
+        const dotMonth = dotDate.getMonth() + 1;
+        
+        // If no bubbles are selected, show all dots at normal size
+        if (vis.selectedBubbles.size === 0) return 3;
+        
+        // Check if this dot's date matches any selected bubble
+        for (const timestamp of vis.selectedBubbles) {
+          const selectedDate = new Date(timestamp);
+          if (selectedDate.getFullYear() === dotYear && 
+              selectedDate.getMonth() === dotDate.getMonth()) {
+            return 3;
+          }
+        }
+        return 2;
+      });
+  }
+
+  updateVis(mapBg, selectedBins = { mag: [], depth: [] }) {
     let vis = this;
 
     //want to see how zoomed in you are?
@@ -160,6 +219,10 @@ class LeafletMap {
       )
       .attr("fill", (d) => vis.colorScale(d.mag)) //---- TO DO- color by magnitude
       .attr("r", 3);
+
+    // Update opacity and size based on selection
+    vis.updateMapDots();
+
     if (mapBg) {
       console.log(mapBg);
       //if we are changing the map background, we need to remove the old one and add the new one
@@ -189,6 +252,27 @@ class LeafletMap {
       }
       vis.theMap.addLayer(vis.base_layer);
     }
+
+    vis.Dots.attr(
+      "cx",
+      (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
+    )
+      .attr(
+        "cy",
+        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
+      )
+      .attr("fill", (d) => vis.colorScale(d.mag))
+      .attr("r", 3)
+      // Added: opacity based on bin selection
+      .attr("opacity", (d) => {
+        const magMatch =
+          selectedBins.mag.length === 0 ||
+          selectedBins.mag.some((b) => d.mag >= b.x0 && d.mag < b.x1);
+        const depthMatch =
+          selectedBins.depth.length === 0 ||
+          selectedBins.depth.some((b) => d.depth >= b.x0 && d.depth < b.x1);
+        return magMatch && depthMatch ? 1 : 0.01;
+      });
   }
 
   renderVis() {
