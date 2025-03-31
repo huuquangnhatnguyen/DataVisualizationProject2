@@ -55,3 +55,9 @@
 #reset-button:hover {
   background-color: #cc0000;
 }
+
+:root {
+  --selection-color: #ff4444;
+}
+
+

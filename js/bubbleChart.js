@@ -303,7 +303,7 @@ class bubbleChart {
             d3.select(this)
               .transition()
               .duration(200)
-              .attr("fill", !isSelected ? "orange" : vis.colorScale(d.year));
+              .attr("fill", !isSelected ? "var(--selection-color)" : vis.colorScale(d.year));
             vis.config.onBubbleSelect(d.year, d.month);
           });
         });

@@ -194,7 +194,7 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       binStep: 0.25,
       color: "steelblue",
       units: "",
-      hoverColor: "orange",
+      hoverColor: "var(--selection-color)",
       onBinSelected: handleBinSelected,
     });
 
@@ -204,7 +204,7 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
       binStep: 25,
       color: "Green",
       units: "",
-      hoverColor: "purple",
+      hoverColor: "var(--selection-color)",
       onBinSelected: handleBinSelected,
     });
 
