@@ -3,6 +3,11 @@ let selectedBins = {
   depth: [],
 };
 
+// Add at the top with other global variables
+let isPlaying = false;
+let animationInterval;
+let timeExtent;
+
 function createBubbleChartData(data) {
   let bubbleData = [];
   let grouped = d3.rollups(
@@ -77,13 +82,49 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
   .then((data) => {
     // console.log("number of items: " + data.length);
 
-    data.forEach((d) => {
+    data.forEach((d, i) => {
       //convert from string to number
+      d.id = i;
       d.latitude = +d.latitude;
       d.longitude = +d.longitude;
       d.mag = +d.mag;
       d.date = new Date(d.time);
       d.depth = +d.depth;
+    });
+
+    // As things stand, the time will be from the most recent to the oldest, which is not ideal for a timeline slider. We will reverse the order of the data to have the oldest date first. This will make the timeline more intuitive for users.
+    // This will also make the timeline slider start from the oldest date to the most recent date.
+    data.sort((a, b) => a.date - b.date); // Sort by date ascending
+    timeExtent = d3.extent(data, (d) => d.date);
+    const slider = d3.select("#timeline-slider");
+    const timeDisplay = d3.select("#time-display");
+
+    slider
+      .attr("min", 0)
+      .attr("max", data.length - 1)
+      .on("input", function () {
+        updateVisualizations(+this.value);
+      });
+
+    // Function to update visualizations based on the time slider value
+    d3.select("#play-button").on("click", function () {
+      isPlaying = !isPlaying;
+      this.textContent = isPlaying ? "Pause" : "Play";
+
+      // If the play button is clicked, we toggle the isPlaying state
+      if (isPlaying) {
+        animationInterval = setInterval(() => {
+          // Check if the current value of the slider is less than the max value
+          const currentValue = +slider.property("value");
+
+          // If the current value is less than the max value, increment it by 100 (or whatever step you want)
+          const newValue =
+            currentValue < data.length - 1 ? currentValue + 100 : 0;
+          slider.property("value", newValue).dispatch("input");
+        }, 100);
+      } else {
+        clearInterval(animationInterval);
+      }
     });
 
     // Initialize the bubbleChart timeline
@@ -175,6 +216,25 @@ d3.csv("data/2024-2025.csv") //**** TO DO  switch this to loading the quakes 'da
 
       // Update map with full opacity
       leafletMap.updateVis(null, selectedBins);
+    }
+
+    // Update visualizations when the slider value changes
+    function updateVisualizations(index) {
+      const currentDate = data[index].date;
+      timeDisplay.text(currentDate.toLocaleDateString());
+
+      // Filter data up to current date
+      const filteredData = data.filter((d) => d.date <= currentDate);
+
+      // Update all visualizations with filtered data
+      leafletMap.updateData(filteredData);
+      leafletMap.updateTimeFilter(currentDate);
+
+      const bubbleData = createBubbleChartData(filteredData);
+      myBubbleChart.updateVis(bubbleData);
+
+      magChart.updateVis(filteredData);
+      depthChart.updateVis(filteredData);
     }
 
     // Added: Event listener for reset button

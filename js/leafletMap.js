@@ -305,4 +305,40 @@ class LeafletMap {
 
     //not using right now...
   }
+
+  // Update the visualization with new data
+  updateData(newData) {
+    this.data = newData;
+    this.updateVis();
+  }
+
+  // Update the visualization based on a time filter
+  updateTimeFilter(currentDate) {
+    let vis = this;
+
+    vis.Dots = vis.svg
+      .selectAll("circle")
+      .data(vis.data, (d) => d.id) // Add unique key based on earthquake ID
+      .join(
+        (enter) =>
+          enter
+            .append("circle")
+            .attr("fill", (d) => vis.colorScale(d.mag))
+            .attr("stroke", "black")
+            .attr("r", 0)
+            .call((enter) =>
+              enter
+                .transition()
+                .duration(500)
+                .attr("r", (d) => (d.date <= currentDate ? 3 : 0))
+            ),
+        (update) =>
+          update
+            .attr("opacity", (d) => (d.date <= currentDate ? 1 : 0))
+            .attr("r", (d) => (d.date <= currentDate ? 3 : 0)),
+        (exit) => exit.remove()
+      );
+
+    vis.updateVis();
+  }
 }

@@ -242,9 +242,37 @@ class BarChart {
   updateVis(newData) {
     const vis = this;
     vis.rawData = newData;
-    // Process raw data into bins
+
+    // Reprocess data with new dataset
     vis.processData();
-    vis.createScales();
-    vis.drawBars();
+
+    // Update scales
+    vis.xScale.domain([
+      d3.min(vis.data, (d) => d.x0),
+      d3.max(vis.data, (d) => d.x1),
+    ]);
+    vis.yScale.domain([0, d3.max(vis.data, (d) => d.count)]);
+
+    // Update axes
+    vis.svg.select(".x-axis").call(d3.axisBottom(vis.xScale));
+    vis.svg.select(".y-axis").call(d3.axisLeft(vis.yScale));
+
+    // Update bars
+    vis.svg
+      .selectAll(".bar")
+      .data(vis.data)
+      .join("rect")
+      .attr("class", "bar")
+      .attr("x", (d) => vis.xScale(d.x0) + 10)
+      .attr("width", (d) =>
+        Math.max(0, vis.xScale(d.x1) - vis.xScale(d.x0) - 1)
+      )
+      .attr("y", (d) => vis.yScale(d.count))
+      .attr("height", (d) => vis.height - vis.yScale(d.count))
+      .attr("fill", (d) =>
+        vis.selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)
+          ? vis.config.hoverColor
+          : vis.config.color
+      );
   }
 }
