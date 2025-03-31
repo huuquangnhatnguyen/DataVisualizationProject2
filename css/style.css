@@ -70,6 +70,11 @@
   margin: 0 10px;
 }
 
+
+:root {
+  --selection-color: #ff4444;
+}
+
 #time-display {
   text-align: center;
   font-weight: bold;
@@ -83,3 +88,4 @@ circle {
 .bar {
   transition: y 0.3s ease-in-out, height 0.3s ease-in-out;
 }
+

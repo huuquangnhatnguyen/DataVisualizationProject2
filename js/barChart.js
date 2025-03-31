@@ -15,7 +15,7 @@ class BarChart {
       color: options.color || "steelblue",
       binStep: options.binStep || 0.5,
       units: options.units || "",
-      hoverColor: options.hoverColor || "orange",
+      hoverColor: options.hoverColor || "var(--selection-color)",
       onBinSelected: options.onBinSelected || null, // Added: callback for bin selection
     };
     this.rawData = rawData;
