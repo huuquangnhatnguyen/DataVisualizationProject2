@@ -104,7 +104,196 @@ class LeafletMap {
           .transition() //D3 selects the object we have moused over in order to perform operations on it
           .duration("150") //how long we are transitioning between the two states (works like keyframes)
           .attr("fill", "red") //change the fill
+          .attr("r", 5); //change radius
+
+        //create a tool tip
+        d3.select("#tooltip")
+          .style("opacity", 1)
+          .style("z-index", 1000000)
+          // Format number with million and thousand separator
+          //***** TO DO- change this tooltip to show useful information about the quakes
+          .html(
+            `<div class="tooltip-label">
+            <b>Location:</b> ${d.place} <br>
+            <b>Magnitude:</b> ${d.mag} <br>
+            <b>Depth:</b> ${d.depth} km <br>
+            <b>Time:</b> ${d.time} <br>
+            <b>Lattitude</b> ${d.latitude} <br>
+            <b>Longitude</b> ${d.longitude} <br>
+            </div>`
+          );
+      })
+      .on("mousemove", (event) => {
+        //position the tooltip
+        d3.select("#tooltip")
+          .style("left", event.pageX + 10 + "px")
+          .style("top", event.pageY + 10 + "px");
+      })
+      .on("mouseleave", function () {
+        //function to add mouseover event
+        d3.select(this)
+          .transition() //D3 selects the object we have moused over in order to perform operations on it
+          .duration("150") //how long we are transitioning between the two states (works like keyframes)
+          .attr("fill", (d) => vis.colorScale(d.mag)) //change the fill  TO DO- change fill again
+          .attr("r", 3); //change radius
+
+        d3.select("#tooltip").style("opacity", 0); //turn off the tooltip
+      });
+
+    //handler here for updating the map, as you zoom in and out
+    vis.theMap.on("zoomend", function () {
+      vis.updateVis();
+      // vis.updateFilter(vis.selectedBins);
+    });
+
+    // Add event listener for bubble selection
+    // document.addEventListener("bubbleSelected", (event) => {
+    //   const { year, month, selected } = event.detail;
+    //   const date = new Date(year, month - 1);
+
+    //   if (selected) {
+    //     vis.selectedBubbles.add(date.getTime());
+    //   } else {
+    //     vis.selectedBubbles.delete(date.getTime());
+    //   }
+
+    //   vis.updateMapDots();
+    // });
+
+    document.addEventListener("dataFilterChange", (event) => {
+      const { filteredData } = event.detail;
+      if (filteredData) {
+        // vis.data = filteredData;
+        vis.renderDots(filteredData);
+      }
+    });
+  }
+
+  updateVis(mapBg) {
+    let vis = this;
+
+    //want to see how zoomed in you are?
+    // console.log(vis.map.getZoom()); //how zoomed am I?
+    //----- maybe you want to use the zoom level as a basis for changing the size of the points... ?
+
+    //redraw based on new zoom- need to recalculate on-screen position
+    vis.Dots.attr(
+      "cx",
+      (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
+    )
+      .attr(
+        "cy",
+        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
+      )
+      .attr("fill", (d) => vis.colorScale(d.mag)) //---- TO DO- color by magnitude
+      .attr("r", 4)
+      .on("mouseover", function (event, d) {
+        //function to add mouseover event
+        d3.select(this)
+          .transition() //D3 selects the object we have moused over in order to perform operations on it
+          .duration("150") //how long we are transitioning between the two states (works like keyframes)
+          .attr("fill", "red") //change the fill
+          .attr("r", 5); //change radius
+
+        //create a tool tip
+        d3.select("#tooltip")
+          .style("opacity", 1)
+          .style("z-index", 1000000)
+          // Format number with million and thousand separator
+          //***** TO DO- change this tooltip to show useful information about the quakes
+          .html(
+            `<div class="tooltip-label">
+            <b>Location:</b> ${d.place} <br>
+            <b>Magnitude:</b> ${d.mag} <br>
+            <b>Depth:</b> ${d.depth} km <br>
+            <b>Time:</b> ${Date(d.time)} <br>
+            <b>Lattitude</b> ${d.latitude} <br>
+            <b>Longitude</b> ${d.longitude} <br>
+            </div>`
+          );
+      })
+      .on("mousemove", (event) => {
+        //position the tooltip
+        d3.select("#tooltip")
+          .style("left", event.pageX + 10 + "px")
+          .style("top", event.pageY + 10 + "px");
+      })
+      .on("mouseleave", function () {
+        //function to add mouseover event
+        d3.select(this)
+          .transition() //D3 selects the object we have moused over in order to perform operations on it
+          .duration("150") //how long we are transitioning between the two states (works like keyframes)
+          .attr("fill", (d) => vis.colorScale(d.mag)) //change the fill  TO DO- change fill again
           .attr("r", 4); //change radius
+
+        d3.select("#tooltip").style("opacity", 0); //turn off the tooltip
+      });
+
+    // Update opacity and size based on selection
+    // vis.updateMapDots();
+    // Update map background if specified
+    if (mapBg) {
+      //if we are changing the map background, we need to remove the old one and add the new one
+      vis.theMap.removeLayer(vis.base_layer);
+      if (mapBg == "TOPO") {
+        vis.base_layer = L.tileLayer(vis.topoUrl, {
+          id: "topo",
+          attribution: vis.topoAttr,
+        });
+      } else if (mapBg == "street") {
+        vis.base_layer = L.tileLayer(vis.streetMapUrl, {
+          id: "streetMap",
+          attribution: vis.streetMapAttr,
+        });
+      } else if (mapBg == "physical") {
+        vis.base_layer = L.tileLayer(vis.worldPhysicalUrl, {
+          id: "worldPhysical",
+          attribution: vis.worldPhysicalAttr,
+          ext: "png",
+        });
+      } else if (mapBg == "ESRI") {
+        vis.base_layer = L.tileLayer(vis.esriUrl, {
+          id: "esri-image",
+          attribution: vis.esriAttr,
+          ext: "png",
+        });
+      }
+      vis.theMap.addLayer(vis.base_layer);
+    }
+  }
+
+  renderDots(newData) {
+    let vis = this;
+    vis.data = newData;
+    vis.Dots = vis.svg
+      .selectAll("circle")
+      .data(vis.data)
+      .join("circle")
+      .attr("fill", (d) => vis.colorScale(d.mag))
+      //---- TO DO- color by magnitude
+      .attr("stroke", "black")
+
+      //Leaflet has to take control of projecting points.
+      //Here we are feeding the latitude and longitude coordinates to
+      //leaflet so that it can project them on the coordinates of the view.
+      //the returned conversion produces an x and y point.
+      //We have to select the the desired one using .x or .y
+      .attr(
+        "cx",
+        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
+      )
+      .attr(
+        "cy",
+        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
+      )
+      .attr("r", (d) => 3) // --- TO DO- want to make radius proportional to earthquake size?
+      .on("mouseover", function (event, d) {
+        //function to add mouseover event
+        d3.select(this)
+          .transition() //D3 selects the object we have moused over in order to perform operations on it
+          .duration("150") //how long we are transitioning between the two states (works like keyframes)
+          .attr("fill", "red") //change the fill
+          .attr("r", 5); //change radius
 
         //create a tool tip
         d3.select("#tooltip")
@@ -143,163 +332,9 @@ class LeafletMap {
     //handler here for updating the map, as you zoom in and out
     vis.theMap.on("zoomend", function () {
       vis.updateVis();
-      vis.updateFilter(vis.selectedBins);
-    });
-
-    // Add event listener for bubble selection
-    document.addEventListener("bubbleSelected", (event) => {
-      const { year, month, selected } = event.detail;
-      const date = new Date(year, month - 1);
-
-      if (selected) {
-        vis.selectedBubbles.add(date.getTime());
-      } else {
-        vis.selectedBubbles.delete(date.getTime());
-      }
-
-      vis.updateMapDots();
-    });
-
-    document.addEventListener("continentChange", (event) => {
-      const { selectedContinent } = event.detail;
-
-      if (selectedContinent) {
-        vis.selectedContinent = selectedContinent;
-      }
-      vis.updateMapDotsByContinent(selectedContinent);
-    });
-
-    document.addEventListener("binChange", (event) => {
-      const { selectedBins } = event.detail;
-
-      if (selectedBins.depth.length > 0 || selectedBins.mag.length > 0) {
-        vis.selectedBins = selectedBins;
-      }
-      vis.updateMapDotsOnBinChange(selectedBins);
+      // vis.updateFilter(vis.selectedBins);
     });
   }
-
-  updateMapDots() {
-    let vis = this;
-
-    vis.Dots.attr("opacity", (d) => {
-      const dotDate = new Date(d.time);
-      const dotYear = dotDate.getFullYear();
-      const dotMonth = dotDate.getMonth() + 1;
-
-      // If no bubbles are selected, show all dots
-      if (vis.selectedBubbles.size === 0) return 1;
-
-      // Check if this dot's date matches any selected bubble
-      for (const timestamp of vis.selectedBubbles) {
-        const selectedDate = new Date(timestamp);
-        if (
-          selectedDate.getFullYear() === dotYear &&
-          selectedDate.getMonth() === dotDate.getMonth()
-        ) {
-          return 1;
-        }
-      }
-      return 0;
-    }).attr("r", (d) => {
-      const dotDate = new Date(d.time);
-      const dotYear = dotDate.getFullYear();
-      const dotMonth = dotDate.getMonth() + 1;
-
-      // If no bubbles are selected, show all dots at normal size
-      if (vis.selectedBubbles.size === 0) return 3;
-
-      // Check if this dot's date matches any selected bubble
-      for (const timestamp of vis.selectedBubbles) {
-        const selectedDate = new Date(timestamp);
-        if (
-          selectedDate.getFullYear() === dotYear &&
-          selectedDate.getMonth() === dotDate.getMonth()
-        ) {
-          return 3;
-        }
-      }
-      return 2;
-    });
-  }
-
-  // Update the map visualization based on continent
-  updateMapDotsByContinent(continent) {
-    let vis = this;
-    // Update opacity based on continent selection
-    vis.Dots.attr("opacity", (d) => {
-      if (!continent) return 1; // No filtering
-
-      return d.Continent === continent ? 1 : 0;
-    });
-  }
-
-  // Update the map visualization based on bin changes
-  updateMapDotsOnBinChange(selectedBins) {
-    let vis = this;
-    vis.Dots.attr("opacity", (d) => {
-      const magSelected = selectedBins.mag.some(
-        (bin) => d.mag >= bin.x0 && d.mag <= bin.x1
-      );
-      const depthSelected = selectedBins.depth.some(
-        (bin) => d.depth >= bin.x0 && d.depth <= bin.x1
-      );
-      return magSelected || depthSelected ? 1 : 0;
-    });
-  }
-
-  updateVis(mapBg, selectedBins = { mag: [], depth: [] }, continent) {
-    let vis = this;
-
-    //want to see how zoomed in you are?
-    // console.log(vis.map.getZoom()); //how zoomed am I?
-    //----- maybe you want to use the zoom level as a basis for changing the size of the points... ?
-
-    //redraw based on new zoom- need to recalculate on-screen position
-    vis.Dots.attr(
-      "cx",
-      (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
-    )
-      .attr(
-        "cy",
-        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
-      )
-      .attr("fill", (d) => vis.colorScale(d.mag)) //---- TO DO- color by magnitude
-      .attr("r", 3);
-
-    // Update opacity and size based on selection
-    vis.updateMapDots();
-    // Update map background if specified
-    if (mapBg) {
-      //if we are changing the map background, we need to remove the old one and add the new one
-      vis.theMap.removeLayer(vis.base_layer);
-      if (mapBg == "TOPO") {
-        vis.base_layer = L.tileLayer(vis.topoUrl, {
-          id: "topo",
-          attribution: vis.topoAttr,
-        });
-      } else if (mapBg == "street") {
-        vis.base_layer = L.tileLayer(vis.streetMapUrl, {
-          id: "streetMap",
-          attribution: vis.streetMapAttr,
-        });
-      } else if (mapBg == "physical") {
-        vis.base_layer = L.tileLayer(vis.worldPhysicalUrl, {
-          id: "worldPhysical",
-          attribution: vis.worldPhysicalAttr,
-          ext: "png",
-        });
-      } else if (mapBg == "ESRI") {
-        vis.base_layer = L.tileLayer(vis.esriUrl, {
-          id: "esri-image",
-          attribution: vis.esriAttr,
-          ext: "png",
-        });
-      }
-      vis.theMap.addLayer(vis.base_layer);
-    }
-  }
-
   renderVis() {
     let vis = this;
 

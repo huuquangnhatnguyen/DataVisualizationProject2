@@ -37,6 +37,13 @@ class BarChart {
     vis.drawAxes();
     vis.drawBars();
     vis.addLabels();
+    document.addEventListener("dataFilterChange", (event) => {
+      const { filteredData, changeFlag = 1 } = event.detail;
+      if (filteredData && changeFlag) {
+        // vis.data = filteredData;
+        vis.updateVis(filteredData);
+      }
+    });
   }
 
   processData() {
@@ -116,14 +123,14 @@ class BarChart {
     const vis = this;
 
     // X-axis
-    vis.svg
+    vis.xAxis = vis.svg
       .append("g")
       .attr("class", "axis x-axis")
       .attr("transform", `translate(10,${vis.height})`)
       .call(d3.axisBottom(vis.xScale));
 
     // Y-axis
-    vis.svg
+    vis.yAxis = vis.svg
       .append("g")
       .attr("class", "axis y-axis")
       .attr("transform", "translate(10,0)") // Adjust for x-axis offset
@@ -133,7 +140,7 @@ class BarChart {
   drawBars() {
     const vis = this;
 
-    vis.svg
+    vis.bar = vis.svg
       .selectAll(".bar")
       .data(vis.data)
       .enter()
@@ -190,7 +197,7 @@ class BarChart {
     // Added default parameter
     const vis = this;
     vis.selectedBins = selectedBins;
-    vis.svg
+    vis.bar = vis.svg
       .selectAll(".bar")
       .attr("fill", (d) =>
         selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)
@@ -242,37 +249,20 @@ class BarChart {
   updateVis(newData) {
     const vis = this;
     vis.rawData = newData;
+    // vis.svg.remove();
+    vis.bar.remove();
+    vis.xAxis.remove();
+    vis.yAxis.remove();
 
-    // Reprocess data with new dataset
     vis.processData();
 
-    // Update scales
-    vis.xScale.domain([
-      d3.min(vis.data, (d) => d.x0),
-      d3.max(vis.data, (d) => d.x1),
-    ]);
-    vis.yScale.domain([0, d3.max(vis.data, (d) => d.count)]);
+    // Set up dimensions
+    // vis.setupDimensions();
 
-    // Update axes
-    vis.svg.select(".x-axis").call(d3.axisBottom(vis.xScale));
-    vis.svg.select(".y-axis").call(d3.axisLeft(vis.yScale));
-
-    // Update bars
-    vis.svg
-      .selectAll(".bar")
-      .data(vis.data)
-      .join("rect")
-      .attr("class", "bar")
-      .attr("x", (d) => vis.xScale(d.x0) + 10)
-      .attr("width", (d) =>
-        Math.max(0, vis.xScale(d.x1) - vis.xScale(d.x0) - 1)
-      )
-      .attr("y", (d) => vis.yScale(d.count))
-      .attr("height", (d) => vis.height - vis.yScale(d.count))
-      .attr("fill", (d) =>
-        vis.selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)
-          ? vis.config.hoverColor
-          : vis.config.color
-      );
+    // Create visualization elements
+    vis.createScales();
+    vis.drawAxes();
+    vis.drawBars();
+    vis.addLabels();
   }
 }
