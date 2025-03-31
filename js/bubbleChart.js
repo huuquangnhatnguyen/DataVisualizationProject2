@@ -18,6 +18,7 @@ class bubbleChart {
   /**
    * @param {Object} _config
    * @param {Object[]} _data
+ 
    */
   constructor(_config, _data) {
     // Configuration object
@@ -26,6 +27,7 @@ class bubbleChart {
       containerWidth: _config.containerWidth || 800,
       containerHeight: _config.containerHeight || 600,
       margin: _config.margin || { top: 40, right: 20, bottom: 60, left: 60 },
+      onBubbleSelect: _config.onBubbleSelect,
     };
 
     // Data array
@@ -41,7 +43,6 @@ class bubbleChart {
 
   initVis() {
     let vis = this; // Keep a reference to `this` in case we nest functions
-    console.log(vis.data);
     // Define chart dimensions
     vis.width =
       vis.config.containerWidth -
@@ -87,15 +88,23 @@ class bubbleChart {
         `translate(${vis.config.margin.left}, ${vis.config.margin.top})`
       );
     vis.renderVis();
+    document.addEventListener("dataFilterChange", (event) => {
+      const { bubbleData } = event.detail;
+      if (bubbleData) {
+        // vis.data = filteredData;
+        vis.updateVis(bubbleData);
+      }
+    });
   }
 
   updateVis(newData) {
     const vis = this;
     if (newData) {
       vis.data = newData;
-      console.log(vis.data);
 
       // use `.raise()` on the labels to keep them atop the circles
+      vis.chart.selectAll(".x-axis").remove();
+      vis.chart.selectAll(".y-axis").remove();
       vis.circles.remove();
       vis.labels.remove();
       vis.renderVis();
@@ -123,7 +132,6 @@ class bubbleChart {
       .enter()
       .append("circle")
       .attr("r", (d) => {
-        console.log(vis.rScale(d.count_of_ref));
         return vis.rScale(d.count_of_ref);
       })
       .attr("fill", (d) => vis.colorScale(d.year))
@@ -296,17 +304,7 @@ class bubbleChart {
               .transition()
               .duration(200)
               .attr("fill", !isSelected ? "orange" : vis.colorScale(d.year));
-
-            // Dispatch custom event with selected data
-            const customEvent = new CustomEvent("bubbleSelected", {
-              detail: {
-                year: d.year,
-                month: d.month,
-                count: d.count_of_ref,
-                selected: !isSelected,
-              },
-            });
-            document.dispatchEvent(customEvent);
+            vis.config.onBubbleSelect(d.year, d.month);
           });
         });
 

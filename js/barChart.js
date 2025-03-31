@@ -37,6 +37,13 @@ class BarChart {
     vis.drawAxes();
     vis.drawBars();
     vis.addLabels();
+    document.addEventListener("dataFilterChange", (event) => {
+      const { filteredData, changeFlag = 1 } = event.detail;
+      if (filteredData && changeFlag) {
+        // vis.data = filteredData;
+        vis.updateVis(filteredData);
+      }
+    });
   }
 
   processData() {
@@ -116,14 +123,14 @@ class BarChart {
     const vis = this;
 
     // X-axis
-    vis.svg
+    vis.xAxis = vis.svg
       .append("g")
       .attr("class", "axis x-axis")
       .attr("transform", `translate(10,${vis.height})`)
       .call(d3.axisBottom(vis.xScale));
 
     // Y-axis
-    vis.svg
+    vis.yAxis = vis.svg
       .append("g")
       .attr("class", "axis y-axis")
       .attr("transform", "translate(10,0)") // Adjust for x-axis offset
@@ -133,7 +140,7 @@ class BarChart {
   drawBars() {
     const vis = this;
 
-    vis.svg
+    vis.bar = vis.svg
       .selectAll(".bar")
       .data(vis.data)
       .enter()
@@ -190,7 +197,7 @@ class BarChart {
     // Added default parameter
     const vis = this;
     vis.selectedBins = selectedBins;
-    vis.svg
+    vis.bar = vis.svg
       .selectAll(".bar")
       .attr("fill", (d) =>
         selectedBins.some((b) => b.x0 === d.x0 && b.x1 === d.x1)
@@ -242,9 +249,20 @@ class BarChart {
   updateVis(newData) {
     const vis = this;
     vis.rawData = newData;
-    // Process raw data into bins
+    // vis.svg.remove();
+    vis.bar.remove();
+    vis.xAxis.remove();
+    vis.yAxis.remove();
+
     vis.processData();
+
+    // Set up dimensions
+    // vis.setupDimensions();
+
+    // Create visualization elements
     vis.createScales();
+    vis.drawAxes();
     vis.drawBars();
+    vis.addLabels();
   }
 }
