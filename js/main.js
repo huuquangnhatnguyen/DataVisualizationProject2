@@ -98,6 +98,7 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       d.mag = +d.mag;
       d.date = new Date(d.time);
       d.depth = +d.depth;
+      d.year = d.date.getFullYear();
     });
     let filters = {
       continent: "",
@@ -122,10 +123,10 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       return res;
     };
 
-    // As things stand, the time will be from the most recent to the oldest, which is not ideal for a timeline slider. We will reverse the order of the data to have the oldest date first. This will make the timeline more intuitive for users.
     // This will also make the timeline slider start from the oldest date to the most recent date.
     data.sort((a, b) => a.date - b.date); // Sort by date ascending
-    timeExtent = d3.extent(data, (d) => d.date);
+    timeExtent = d3.extent(data, (d) => d.year);
+    console.log(timeExtent);
     const slider = d3.select("#timeline-slider");
     const timeDisplay = d3.select("#time-display");
 
@@ -140,6 +141,7 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     d3.select("#play-button").on("click", function () {
       isPlaying = !isPlaying;
       this.textContent = isPlaying ? "Pause" : "Play";
+      d3.select("#intro").text("Earthquakes Frequencies in:");
 
       // If the play button is clicked, we toggle the isPlaying state
       if (isPlaying) {
@@ -151,20 +153,12 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
           const newValue =
             currentValue < data.length - 1 ? currentValue + 100 : 0;
           slider.property("value", newValue).dispatch("input");
-        }, 100);
+        }, 1);
       } else {
         clearInterval(animationInterval);
       }
     });
 
-    // Initialize the bubbleChart timeline
-    // let grouped = d3.rollups(
-    //   data,
-    //   (v) => v.length,
-    //   (d) => d.date.getFullYear(),
-    //   (d) => d.date.getMonth() + 1
-    // );
-    //console.log(grouped);
     let bubbleData = createBubbleChartData(data);
 
     const handleBubbleSelect = (year, month, event) => {
@@ -186,8 +180,8 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     let myBubbleChart = new bubbleChart(
       {
         parentElement: "#bubble-chart",
-        containerWidth: 800,
-        containerHeight: 700,
+        containerWidth: 1200,
+        containerHeight: 800,
         margin: { top: 40, right: 20, bottom: 40, left: 60 },
         onBubbleSelect: handleBubbleSelect,
       },
@@ -297,7 +291,8 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     // Update visualizations when the slider value changes
     function updateVisualizations(index) {
       const currentDate = data[index].date;
-      timeDisplay.text(currentDate.toLocaleDateString());
+      const currentYear = data[index].year;
+      timeDisplay.text(currentYear);
 
       // Filter data up to current date
       const filteredData = data.filter((d) => d.date <= currentDate);
@@ -308,7 +303,6 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
 
       const bubbleData = createBubbleChartData(filteredData);
       myBubbleChart.updateVis(bubbleData);
-
       magChart.updateVis(filteredData);
       depthChart.updateVis(filteredData);
     }
