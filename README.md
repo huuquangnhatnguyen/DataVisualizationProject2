@@ -54,3 +54,28 @@ Brushing + Linking: will be used to zoomed in and scanned.
 - 3.10 - 3.16: Pre-Project Preparation: Team members will spend their time to read the documentation, do their own researches and play with leaflet D3.
 - 3.17 - 3.23: Brainstorming and Sketching in the first half, and try to implement our sketches
 - 3.23 - 3.29: Finalizing our design and deploy our product
+
+# Project 2 Documentation
+With our application, the user will be able to see all the quakes that happened from 2004 to 2025 all around the world. By visualizing these patterns with multiple coordinated views, users can:
+- Identify areas with high seismic activities.
+- Understand the magnitude-depth relationships when it comes to earthquakes.
+- Explore regional seismic characteristics with the region filter.
+
+### Data
+**Dataset**: We compiled the data ourselves to get the most information we possibly could for all the quakes from 2014-2025.
+**Source**: https://earthquake.usgs.gov/earthquakes/search/
+
+**Fields in our data**: 
+- Time (UTC timestamp)
+- Latitude and Longitude for location.
+- Depth of the quakes.
+- Magnitude and magnitude type.
+- A specific ID for each quake.
+- Specific location (country and Continent) for regional filtering.
+
+### Visualization Components
+#### 1. Interactive Leaflet Map
+The map features color-coded earthquakes by magnitude (the redder the dot, the bigger the quake). A tooltip will reveal itself as the user hovers over a dot. The map supports multiple base options, allowing users to see how quakes affect the world in several views. We also allow for filtering between continents, which will give the user important insights on more local/regional seismic activities.
+
+#### 2. Timeline Bubble Chart
+The bubble chart shows the timeline and how many quakes there are in a given month in a year.
