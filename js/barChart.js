@@ -7,8 +7,8 @@ class BarChart {
   constructor(config, rawData, options = {}) {
     this.config = {
       parentElement: config.parentElement,
-      containerWidth: config.containerWidth || 600,
-      containerHeight: config.containerHeight || 600,
+      containerWidth: config.containerWidth || 300,
+      containerHeight: config.containerHeight || 300,
       margin: { top: 20, right: 20, bottom: 40, left: 50 },
       field: options.field || "mag",
       label: options.label || "Magnitude",

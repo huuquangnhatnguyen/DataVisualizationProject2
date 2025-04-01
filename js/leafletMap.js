@@ -59,8 +59,8 @@ class LeafletMap {
     });
 
     vis.theMap = L.map("my-map", {
-      center: [30, 0],
-      zoom: 2,
+      center: [10, 0],
+      zoom: 1.2,
       layers: [vis.base_layer],
     });
 
@@ -177,58 +177,7 @@ class LeafletMap {
     //----- maybe you want to use the zoom level as a basis for changing the size of the points... ?
 
     //redraw based on new zoom- need to recalculate on-screen position
-    vis.Dots.attr(
-      "cx",
-      (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
-    )
-      .attr(
-        "cy",
-        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
-      )
-      .attr("fill", (d) => vis.colorScale(d.mag)) //---- TO DO- color by magnitude
-      .attr("r", 4)
-      .on("mouseover", function (event, d) {
-        //function to add mouseover event
-        d3.select(this)
-          .transition() //D3 selects the object we have moused over in order to perform operations on it
-          .duration("150") //how long we are transitioning between the two states (works like keyframes)
-          .attr("fill", "red") //change the fill
-          .attr("r", 5); //change radius
-
-        //create a tool tip
-        d3.select("#tooltip")
-          .style("opacity", 1)
-          .style("z-index", 1000000)
-          // Format number with million and thousand separator
-          //***** TO DO- change this tooltip to show useful information about the quakes
-          .html(
-            `<div class="tooltip-label">
-            <b>Location:</b> ${d.place} <br>
-            <b>Magnitude:</b> ${d.mag} <br>
-            <b>Depth:</b> ${d.depth} km <br>
-            <b>Time:</b> ${Date(d.time)} <br>
-            <b>Lattitude</b> ${d.latitude} <br>
-            <b>Longitude</b> ${d.longitude} <br>
-            </div>`
-          );
-      })
-      .on("mousemove", (event) => {
-        //position the tooltip
-        d3.select("#tooltip")
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY + 10 + "px");
-      })
-      .on("mouseleave", function () {
-        //function to add mouseover event
-        d3.select(this)
-          .transition() //D3 selects the object we have moused over in order to perform operations on it
-          .duration("150") //how long we are transitioning between the two states (works like keyframes)
-          .attr("fill", (d) => vis.colorScale(d.mag)) //change the fill  TO DO- change fill again
-          .attr("r", 4); //change radius
-
-        d3.select("#tooltip").style("opacity", 0); //turn off the tooltip
-      });
-
+    vis.renderDots(vis.data);
     // Update opacity and size based on selection
     // vis.updateMapDots();
     // Update map background if specified
