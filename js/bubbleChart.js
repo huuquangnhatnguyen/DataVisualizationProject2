@@ -24,8 +24,8 @@ class bubbleChart {
     // Configuration object
     this.config = {
       parentElement: _config.parentElement,
-      containerWidth: _config.containerWidth || 800,
-      containerHeight: _config.containerHeight || 600,
+      containerWidth: _config.containerWidth || 1200,
+      containerHeight: _config.containerHeight || 1000,
       margin: _config.margin || { top: 40, right: 20, bottom: 60, left: 60 },
       onBubbleSelect: _config.onBubbleSelect,
     };
@@ -329,7 +329,10 @@ class bubbleChart {
             d3.select(this)
               .transition()
               .duration(200)
-              .attr("fill", !isSelected ? "var(--selection-color)" : vis.colorScale(d.year));
+              .attr(
+                "fill",
+                !isSelected ? "var(--selection-color)" : vis.colorScale(d.year)
+              );
             vis.config.onBubbleSelect(d.year, d.month);
           });
         });

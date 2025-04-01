@@ -10,74 +10,81 @@
     <script src="js/legend.js"></script>
   </head>
   <body>
-    <div>
-      <h1>Interactive Map with Leaflet</h1>
-      <p>Click on the map to see the coordinates.</p>
-    </div>
-    <div>
-      <select
-        name="select-map-bg"
-        id="map-bg-selector"
-        aria-placeholder="Select a map background"
-      >
-        <option value="ESRI" default>ESRI</option>
-        <option value="TOPO">TOPO</option>
-        <option value="street">Street Map</option>
-        <option value="physical">World Physical</option>
-      </select>
-      <button id="reset-button">Reset Filters</button>
-      <select name="select-continent" id="continent-selector">
-        <option value="AF">Africa</option>
-        <!-- <option value="AN">Antarctica</option> -->
-        <option value="AS">Asia</option>
-        <option value="EU">Europe</option>
-        <option value="NA">North America</option>
-        <option value="OC">Oceania</option>
-        <option value="Unknown">Others</option>
-        <!-- <option value="SA">South America</option> -->
-      </select>
-      <select name="select-plate" id="select-plate">
-        <option value=""></option>
-      </select>
-    </div>
-
     <!-- Map container -->
-    <div class="map-container">
-      <div id="my-map"></div>
-      <!-- <div id="map2"></div> -->
-    </div>
-    <div id="timeline-container">
-      <div id="time-display"></div>
-      <input
-        type="range"
-        id="timeline-slider"
-        min="0"
-        max="100"
-        value="100"
-        step="1"
-      />
-      <button id="play-button">Play</button>
-    </div>
+    <div style="display: flex">
+      <div class="map-container">
+        <div style="margin-bottom: 5px">
+          <h1>Interactive Map with Leaflet</h1>
+          <p>Click on the map to see the coordinates.</p>
+        </div>
+        <div>
+          <select
+            name="select-map-bg"
+            id="map-bg-selector"
+            aria-placeholder="Select a map background"
+          >
+            <option value="ESRI" default>ESRI</option>
+            <option value="TOPO">TOPO</option>
+            <option value="street">Street Map</option>
+            <option value="physical">World Physical</option>
+          </select>
+          <button id="reset-button">Reset Filters</button>
+          <select name="select-continent" id="continent-selector">
+            <option value="AF">Africa</option>
+            <!-- <option value="AN">Antarctica</option> -->
+            <option value="AS">Asia</option>
+            <option value="EU">Europe</option>
+            <option value="NA">North America</option>
+            <option value="OC">Oceania</option>
+            <option value="Unknown">Others</option>
+            <!-- <option value="SA">South America</option> -->
+          </select>
+          <!-- <select name="select-plate" id="select-plate">
+            <option value=""></option>
+          </select> -->
+          <div id="timeline-container" style="margin: 0px">
+            <div style="display: flex; justify-content: center">
+              <h4 id="intro">
+                Play this button to observe the quakes over time
+              </h4>
+              <div id="time-display"></div>
+            </div>
+            <input
+              type="range"
+              id="timeline-slider"
+              min="0"
+              max="100"
+              value="100"
+              step="1"
+            />
+            <button id="play-button">Play</button>
+          </div>
+        </div>
 
-    <div class="map-by-attributes">
-      <div id="my-mag-chart"></div>
-      <div id="my-depth-chart"></div>
+        <div id="my-map"></div>
+        <!-- <div id="map2"></div> -->
+        <div class="map-by-attributes">
+          <div id="my-mag-chart"></div>
+          <div id="my-depth-chart"></div>
+        </div>
+      </div>
+      <div>
+        <svg id="bubble-chart"></svg>
+        <div id="guide">
+          You can try to drag and mouseover the bubbles for more information
+        </div>
+
+        <!--Button for ordered layout-->
+        <button id="ordered-button">Ordered</button>
+
+        <!--Button for packed layout-->
+        <button id="packed-button">Packed</button>
+      </div>
     </div>
 
     <!-- Timeline of Earthquake Occurrunces  -->
     <section class="bubble-chart-section"></section>
     <div class="tooltip" id="tooltip"></div>
-
-    <svg id="bubble-chart"></svg>
-    <div id="guide">
-      You can try to drag and mouseover the bubbles for more information
-    </div>
-
-    <!--Button for ordered layout-->
-    <button id="ordered-button">Ordered</button>
-
-    <!--Button for packed layout-->
-    <button id="packed-button">Packed</button>
 
     <script src="js/leaflet.js"></script>
 
