@@ -7,11 +7,10 @@ class LeafletMap {
   constructor(_config, _data) {
     this.config = {
       parentElement: _config.parentElement,
+      onHoverHandler: _config.onHoverHandler,
     };
     this.data = _data;
-    this.selectedBubbles = new Set(); // Track selected bubbles
-    this.selectedContinent = "";
-    this.selectedBins = { mag: [], depth: [] };
+    this.hoverSet = new Set();
     this.initVis();
   }
 
@@ -76,70 +75,7 @@ class LeafletMap {
       .domain(extent)
       .interpolate(d3.interpolateHcl);
     //these are the city locations, displayed as a set of dots
-    vis.Dots = vis.svg
-      .selectAll("circle")
-      .data(vis.data)
-      .join("circle")
-      .attr("fill", (d) => vis.colorScale(d.mag))
-      //---- TO DO- color by magnitude
-      .attr("stroke", "black")
-
-      //Leaflet has to take control of projecting points.
-      //Here we are feeding the latitude and longitude coordinates to
-      //leaflet so that it can project them on the coordinates of the view.
-      //the returned conversion produces an x and y point.
-      //We have to select the the desired one using .x or .y
-      .attr(
-        "cx",
-        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).x
-      )
-      .attr(
-        "cy",
-        (d) => vis.theMap.latLngToLayerPoint([d.latitude, d.longitude]).y
-      )
-      .attr("r", (d) => 3) // --- TO DO- want to make radius proportional to earthquake size?
-      .on("mouseover", function (event, d) {
-        //function to add mouseover event
-        d3.select(this)
-          .transition() //D3 selects the object we have moused over in order to perform operations on it
-          .duration("150") //how long we are transitioning between the two states (works like keyframes)
-          .attr("fill", "red") //change the fill
-          .attr("r", 5); //change radius
-
-        //create a tool tip
-        d3.select("#tooltip")
-          .style("opacity", 1)
-          .style("z-index", 1000000)
-          // Format number with million and thousand separator
-          //***** TO DO- change this tooltip to show useful information about the quakes
-          .html(
-            `<div class="tooltip-label">
-            <b>Location:</b> ${d.place} <br>
-            <b>Magnitude:</b> ${d.mag} <br>
-            <b>Depth:</b> ${d.depth} km <br>
-            <b>Time:</b> ${d.time} <br>
-            <b>Lattitude</b> ${d.latitude} <br>
-            <b>Longitude</b> ${d.longitude} <br>
-            </div>`
-          );
-      })
-      .on("mousemove", (event) => {
-        //position the tooltip
-        d3.select("#tooltip")
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY + 10 + "px");
-      })
-      .on("mouseleave", function () {
-        //function to add mouseover event
-        d3.select(this)
-          .transition() //D3 selects the object we have moused over in order to perform operations on it
-          .duration("150") //how long we are transitioning between the two states (works like keyframes)
-          .attr("fill", (d) => vis.colorScale(d.mag)) //change the fill  TO DO- change fill again
-          .attr("r", 3); //change radius
-
-        d3.select("#tooltip").style("opacity", 0); //turn off the tooltip
-      });
-
+    vis.renderDots(vis.data);
     //handler here for updating the map, as you zoom in and out
     vis.theMap.on("zoomend", function () {
       vis.updateVis();
@@ -147,18 +83,16 @@ class LeafletMap {
     });
 
     // Add event listener for bubble selection
-    // document.addEventListener("bubbleSelected", (event) => {
-    //   const { year, month, selected } = event.detail;
-    //   const date = new Date(year, month - 1);
-
-    //   if (selected) {
-    //     vis.selectedBubbles.add(date.getTime());
-    //   } else {
-    //     vis.selectedBubbles.delete(date.getTime());
-    //   }
-
-    //   vis.updateMapDots();
-    // });
+    document.addEventListener("mapPointHover", (event) => {
+      const { searchedData } = event.detail;
+      this.hoverSet.clear();
+      if (searchedData) {
+        searchedData.forEach((element) => {
+          this.hoverSet.add(element.id);
+        });
+        console.log(this.hoverSet);
+      }
+    });
 
     document.addEventListener("dataFilterChange", (event) => {
       const { filteredData } = event.detail;
@@ -260,6 +194,7 @@ class LeafletMap {
             <b>Longitude</b> ${d.longitude} <br>
             </div>`
           );
+        vis.config.onHoverHandler(d.time);
       })
       .on("mousemove", (event) => {
         //position the tooltip

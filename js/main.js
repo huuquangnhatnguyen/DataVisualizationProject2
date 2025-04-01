@@ -8,6 +8,22 @@ let isPlaying = false;
 let animationInterval;
 let timeExtent;
 
+// function
+
+function nearPointsSearch(data, time) {
+  const date = new Date(time);
+  const previousDate = date.getDate() - 1;
+  const nextDate = date.setDate(date.getDate() + 1).toLocaleString();
+
+  const sameDateData = data.filter((d) => {
+    const tempDate = new Date(d.time).toLocaleDateString();
+    if (tempDate === date.toLocaleDateString()) {
+      return d;
+    }
+  });
+  return sameDateData;
+}
+
 function createBubbleChartData(data) {
   let bubbleData = [];
   let grouped = d3.rollups(
@@ -126,7 +142,6 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     // This will also make the timeline slider start from the oldest date to the most recent date.
     data.sort((a, b) => a.date - b.date); // Sort by date ascending
     timeExtent = d3.extent(data, (d) => d.year);
-    console.log(timeExtent);
     const slider = d3.select("#timeline-slider");
     const timeDisplay = d3.select("#time-display");
 
@@ -165,7 +180,6 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       let found = 0;
       const timeStamp = year + " " + month;
       if (filters.time.includes(timeStamp)) {
-        console.log("here");
         filters.time.splice(filters.time.indexOf(timeStamp), 1);
       } else filters.time.push(timeStamp);
 
@@ -177,6 +191,7 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       });
       document.dispatchEvent(bubbleSelectEvent);
     };
+
     let myBubbleChart = new bubbleChart(
       {
         parentElement: "#bubble-chart",
@@ -188,8 +203,20 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       bubbleData
     );
 
+    const handleMapPointHover = (time, event) => {
+      const searchedData = nearPointsSearch(data, time);
+      const MapPointHoverEvent = new CustomEvent("mapPointHover", {
+        detail: {
+          searchedData: searchedData,
+        },
+      });
+      document.dispatchEvent(MapPointHoverEvent);
+    };
     // Initialize chart and then show it
-    leafletMap = new LeafletMap({ parentElement: "#my-map" }, data);
+    leafletMap = new LeafletMap(
+      { parentElement: "#my-map", onHoverHandler: handleMapPointHover },
+      data
+    );
     // map = new MapVis({ parentElement: "#map2" }, data);
 
     // Added: bin selection handler
