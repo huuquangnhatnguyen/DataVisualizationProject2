@@ -117,13 +117,31 @@ class bubbleChart {
     vis.rScale = d3
       .scaleSqrt()
       .domain([0, d3.max(vis.data, (d) => d.count_of_ref)])
-      .range([25, 70]);
+      .range([5, 25]);
 
     // Color scale for each uniqueYear
     vis.colorScale = d3
       .scaleOrdinal()
       .domain(vis.uniqueYears)
       .range(d3.schemeTableau10);
+    
+    // Create cluster centers for each unique year - MODIFIED to be closer together
+    vis.clusters = {};
+    const clusterCount = vis.uniqueYears.length;
+    
+    // Arrange clusters around the center point in a tighter formation
+    const centerX = vis.width / 2;
+    const centerY = vis.height / 2;
+    const radius = Math.min(vis.width, vis.height) / 4; // Smaller radius to keep them closer
+    
+    vis.uniqueYears.forEach((year, i) => {
+      // Position clusters in a circle around the center
+      const angle = (i / clusterCount) * 2 * Math.PI;
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      
+      vis.clusters[year] = {x, y};
+    });
 
     // use `.raise()` on the labels to keep them atop the circles
     vis.circles = vis.chart
@@ -131,9 +149,7 @@ class bubbleChart {
       .data(vis.data)
       .enter()
       .append("circle")
-      .attr("r", (d) => {
-        return vis.rScale(d.count_of_ref);
-      })
+      .attr("r", (d) => vis.rScale(d.count_of_ref))
       .attr("fill", (d) => vis.colorScale(d.year))
       .attr("opacity", 0.7);
 
@@ -144,28 +160,38 @@ class bubbleChart {
       .enter()
       .append("text")
       .attr("class", "label")
-      .text((d) => `${MONTH_NAMES[d.month - 1]} ${d.year}`)
+      .text((d) => `${MONTH_NAMES[d.month - 1]}`)
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
       .style("fill", "#000")
-      .style("font-size", "12px")
+      .style("font-size", "3px")
       .raise(); // ensures labels stay on top of circles
 
     // Tooltip
     vis.tooltip = d3.select("#tooltip");
 
     // Center coordinates
-    const centerX = vis.width / 2;
-    const centerY = vis.height / 2;
+    // const centerX = vis.width / 2;
+    // const centerY = vis.height / 2;
 
     // Create force simulation
+    // vis.simulation = d3
+    //   .forceSimulation(vis.data)
+    //   .force("x", d3.forceX(centerX).strength(0.05))
+    //   .force("y", d3.forceY(centerY).strength(0.05))
+    //   .force(
+    //     "collide",
+    //     d3.forceCollide((d) => vis.rScale(d.count_of_ref) + 1)
+    //   )
+    //   .on("tick", ticked);
+    
     vis.simulation = d3
       .forceSimulation(vis.data)
-      .force("x", d3.forceX(centerX).strength(0.05))
-      .force("y", d3.forceY(centerY).strength(0.05))
+      .force("cluster", d3.forceX(d => vis.clusters[d.year].x).strength(0.3))
+      .force("y", d3.forceY(d => vis.clusters[d.year].y).strength(0.3))
       .force(
         "collide",
-        d3.forceCollide((d) => vis.rScale(d.count_of_ref) + 1)
+        d3.forceCollide((d) => vis.rScale(d.count_of_ref) + 2)
       )
       .on("tick", ticked);
 
@@ -252,8 +278,8 @@ class bubbleChart {
       // Add new x-axis
       let xAxis = d3
         .axisBottom(xScale)
-        .ticks(d3.timeMonth.every(1)) // a tick per month
-        .tickFormat(d3.timeFormat("%b %Y")); // format as month and year
+        .ticks(d3.timeYear.every(1)) // a tick per month
+        .tickFormat(d3.timeFormat("%Y")); // format as month and year
 
       vis.chart
         .append("g")
@@ -339,10 +365,22 @@ class bubbleChart {
       vis.chart.selectAll(".x-axis").remove();
       vis.chart.selectAll(".y-axis").remove();
 
-      // Reset the forces to center
+      // Central force to pull everything toward center
+      const centerX = vis.width / 2;
+      const centerY = vis.height / 2;
+
+      // Reset the forces to create tight year-based clusters that are pulled together
       vis.simulation
-        .force("x", d3.forceX(centerX).strength(0.05))
-        .force("y", d3.forceY(centerY).strength(0.05))
+        .force("cluster", d3.forceX(d => vis.clusters[d.year].x).strength(0.6)) // Year-based clustering
+        .force("y", d3.forceY(d => vis.clusters[d.year].y).strength(0.6)) // Year-based clustering
+        .force(
+          "collide",
+          d3.forceCollide((d) => vis.rScale(d.count_of_ref) + 0.5) // Minimal padding
+        )
+        // Add center-pulling force that affects ALL bubbles
+        .force("center", d3.forceCenter(centerX, centerY).strength(0.1))
+        // Keep the radial force for year-based organization
+        .force("group", d3.forceRadial(20, d => vis.clusters[d.year].x, d => vis.clusters[d.year].y).strength(0.3))
         .alpha(1)
         .restart();
 
@@ -352,6 +390,19 @@ class bubbleChart {
         .duration(500)
         .attr("r", (d) => vis.rScale(d.count_of_ref))
         .attr("fill", (d) => vis.colorScale(d.year));
+
+      // Add year labels
+      vis.chart.selectAll(".year-label").remove();
+      Object.entries(vis.clusters).forEach(([year, center]) => {
+        vis.chart.append("text")
+          .attr("class", "year-label")
+          .attr("x", center.x)
+          .attr("y", center.y - 30)
+          .attr("text-anchor", "middle")
+          .style("font-size", "14px")
+          .style("font-weight", "bold")
+          .text(year);
+      });
 
       // Draw the legend
       drawSizeLegend(vis);
