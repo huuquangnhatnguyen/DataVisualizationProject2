@@ -84,7 +84,7 @@ The bubble chart shows the timeline and how many quakes there are in a given mon
 These charts show the distributions of quakes by their magnitudes and depths, allowing users to see the most common types of quakes. It also interacts with the rest of the charts by having dynamic filters as well as axes that updates with the leaflet map as time goes on.
 
 ### Interactions
-In our application, you can have a number of filters that will affect the visualizations on the page. Selecting a particular region will only show data from that region, interacting with the bubble chart will only show quakes that happened during that particular month, etc... There is also a slider which allows for the quakes to be animated based on the time of their occurence.
+In our application, you can have a number of filters that will affect the visualizations on the page. Selecting a particular region will only show data from that region, interacting with the bubble chart will only show quakes that happened during that particular month, etc... There is also a slider which allows for the quakes to be animated based on the time of their occurrence.
 
 ## Key Findings
 #### 1. The Pacific Ring of Fire
@@ -95,6 +95,9 @@ After messing around with the filters a little bit, I saw that a lot of shallowe
 
 ## Technicality
 All our code can be found right here in this repo (https://github.com/huuquangnhatnguyen/DataVisualizationProject2)
+
+## Demo
+[https://youtu.be/e6JrpEnoIrQ](https://youtu.be/e6JrpEnoIrQ)
 
 We split the work up pretty evenly, with one person handling a small aspect of each level all the way up to level 6. More specifically, here's how we divided the work:
 
