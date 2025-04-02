@@ -158,32 +158,44 @@ class LeafletMap {
       )
       .attr("r", (d) => 3) // --- TO DO- want to make radius proportional to earthquake size?
       .on("mouseover", function (event, d) {
-        const hoveredDate = d.date;
-        const previousDate = new Date(
-          hoveredDate.getFullYear(),
-          hoveredDate.getMonth(),
-          hoveredDate.getDate() - 1
-        );
-        const nextDate = new Date(
-          hoveredDate.getFullYear(),
-          hoveredDate.getMonth(),
-          hoveredDate.getDate() + 1
-        );
-        vis.svg.selectAll("circle").classed("dimmed", true);
+        if (vis.enableHoverEffect) {
+          const hoveredDate = d.date;
+          const previousDate = new Date(
+            hoveredDate.getFullYear(),
+            hoveredDate.getMonth(),
+            hoveredDate.getDate() - 1
+          );
+          const nextDate = new Date(
+            hoveredDate.getFullYear(),
+            hoveredDate.getMonth(),
+            hoveredDate.getDate() + 1
+          );
+          vis.svg.selectAll("circle").classed("dimmed", true);
 
-        // Then highlight only the points from the same date
-        vis.svg
-          .selectAll(`circle[data-date='${hoveredDate.toLocaleDateString()}']`)
-          .classed("dimmed", false)
-          .classed("sameDate", true);
-        vis.svg
-          .selectAll(`circle[data-date='${previousDate.toLocaleDateString()}']`)
-          .classed("dimmed", false)
-          .classed("prevDate", true);
-        vis.svg
-          .selectAll(`circle[data-date='${nextDate.toLocaleDateString()}']`)
-          .classed("dimmed", false)
-          .classed("nextDate", true);
+          // Then highlight only the points from the same date
+          vis.svg
+            .selectAll(
+              `circle[data-date='${hoveredDate.toLocaleDateString()}']`
+            )
+            .classed("dimmed", false)
+            .classed("sameDate", true);
+          vis.svg
+            .selectAll(
+              `circle[data-date='${previousDate.toLocaleDateString()}']`
+            )
+            .classed("dimmed", false)
+            .classed("prevDate", true);
+          vis.svg
+            .selectAll(`circle[data-date='${nextDate.toLocaleDateString()}']`)
+            .classed("dimmed", false)
+            .classed("nextDate", true);
+        } else {
+          d3.select(this)
+            .transition() //D3 selects the object we have moused over in order to perform operations on it
+            .duration("150") //how long we are transitioning between the two states (works like keyframes)
+            .attr("fill", "red") //change the fill  TO DO- change fill again
+            .attr("r", 5); //change radius
+        }
 
         d3.select("#tooltip") //create a tool tip
           .style("opacity", 1)
@@ -217,12 +229,14 @@ class LeafletMap {
           .attr("fill", (d) => vis.colorScale(d.mag)) //change the fill  TO DO- change fill again
           .attr("r", 3); //change radius
 
-        vis.svg
-          .selectAll("circle")
-          .classed("dimmed", false)
-          .classed("sameDate", false)
-          .classed("prevDate", false)
-          .classed("nextDate", false);
+        if (vis.enableHoverEffect) {
+          vis.svg
+            .selectAll("circle")
+            .classed("dimmed", false)
+            .classed("sameDate", false)
+            .classed("prevDate", false)
+            .classed("nextDate", false);
+        }
 
         d3.select("#tooltip").style("opacity", 0); //turn off the tooltip
       });
