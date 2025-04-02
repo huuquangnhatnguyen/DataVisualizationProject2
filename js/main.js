@@ -367,6 +367,7 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
         mag: [],
         depth: [],
         time: [],
+        year: "",
       };
       const continentChangeEvent = new CustomEvent("dataFilterChange", {
         detail: {
