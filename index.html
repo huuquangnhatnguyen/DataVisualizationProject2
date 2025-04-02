@@ -23,13 +23,15 @@
             id="map-bg-selector"
             aria-placeholder="Select a map background"
           >
+            <option value="">Select Map</option>
             <option value="ESRI" default>ESRI</option>
             <option value="TOPO">TOPO</option>
             <option value="street">Street Map</option>
             <option value="physical">World Physical</option>
           </select>
-          <button id="reset-button">Reset Filters</button>
+
           <select name="select-continent" id="continent-selector">
+            <option value="">Select Continent</option>
             <option value="AF">Africa</option>
             <!-- <option value="AN">Antarctica</option> -->
             <option value="AS">Asia</option>
@@ -39,6 +41,22 @@
             <option value="Unknown">Others</option>
             <!-- <option value="SA">South America</option> -->
           </select>
+          <select name="year-select" id="year-select">
+            <option value="" default>Select year</option>
+            <option value="2014">2014</option>
+            <option value="2015">2015</option>
+            <option value="2016">2016</option>
+            <option value="2017">2017</option>
+            <option value="2018">2018</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+            <option value="2021">2021</option>
+            <option value="2022">2022</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+          </select>
+          <button id="reset-button">Reset Filters</button>
           <!-- <select name="select-plate" id="select-plate">
             <option value=""></option>
           </select> -->
@@ -70,15 +88,22 @@
       </div>
       <div>
         <svg id="bubble-chart"></svg>
-        <div id="guide">
-          You can try to drag and mouseover the bubbles for more information
+        <div style="display: flex; justify-content: space-around">
+          <div id="guide">
+            You can try to drag and mouseover the bubbles for more information
+          </div>
+
+          <div style="display: flex; justify-content: space-around">
+            <div style="width: fit-content; margin: 0">
+              Choose display mode:
+            </div>
+            <!--Button for ordered layout-->
+            <button id="ordered-button">Ordered</button>
+
+            <!--Button for packed layout-->
+            <button id="packed-button">Packed</button>
+          </div>
         </div>
-
-        <!--Button for ordered layout-->
-        <button id="ordered-button">Ordered</button>
-
-        <!--Button for packed layout-->
-        <button id="packed-button">Packed</button>
       </div>
     </div>
 

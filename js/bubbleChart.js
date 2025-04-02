@@ -108,12 +108,12 @@ class bubbleChart {
       vis.chart.selectAll(".year-label").remove(); // Remove existing year labels
       vis.circles.remove();
       vis.labels.remove();
-      
+
       // Update uniqueYears based on new data
       vis.uniqueYears = [...new Set(vis.data.map((d) => d.year))];
-      
+
       vis.renderVis();
-      
+
       // If in packed mode, add year labels for the clusters
       if (vis.isPackedMode) {
         vis.addYearLabels();
@@ -123,12 +123,13 @@ class bubbleChart {
 
   addYearLabels() {
     const vis = this;
-    
+
     // Remove any existing year labels
     vis.chart.selectAll(".year-label").remove();
-    
+
     // Add year labels for each cluster
-    vis.yearLabels = vis.chart.selectAll(".year-label")
+    vis.yearLabels = vis.chart
+      .selectAll(".year-label")
       .data(Object.entries(vis.clusters))
       .enter()
       .append("text")
@@ -136,33 +137,33 @@ class bubbleChart {
       .attr("text-anchor", "middle")
       .style("font-size", "30px")
       .style("font-weight", "bold")
-      .text(d => d[0]);  // d[0] is the year
-    
+      .text((d) => d[0]); // d[0] is the year
+
     // Position labels and make them follow clusters in the simulation
     function updateYearLabels() {
       vis.yearLabels
-        .attr("x", d => {
+        .attr("x", (d) => {
           // Find the average x position of all bubbles in this cluster
-          const yearBubbles = vis.data.filter(bubble => bubble.year === d[0]);
-          const avgX = d3.mean(yearBubbles, bubble => bubble.x);
+          const yearBubbles = vis.data.filter((bubble) => bubble.year === d[0]);
+          const avgX = d3.mean(yearBubbles, (bubble) => bubble.x);
           return avgX || d[1].x; // Fallback to cluster center if no data
         })
-        .attr("y", d => {
+        .attr("y", (d) => {
           // Find the average y position of all bubbles in this cluster
           // Then subtract some space to position above the cluster
-          const yearBubbles = vis.data.filter(bubble => bubble.year === d[0]);
-          const avgY = d3.mean(yearBubbles, bubble => bubble.y);
+          const yearBubbles = vis.data.filter((bubble) => bubble.year === d[0]);
+          const avgY = d3.mean(yearBubbles, (bubble) => bubble.y);
           return (avgY || d[1].y) - 40; // Position label above cluster
         });
     }
-    
+
     // Add the update function to the tick event
     const existingTickFunction = vis.simulation.on("tick");
-    
+
     vis.simulation.on("tick", () => {
       // Call existing tick function if it exists
       if (existingTickFunction) existingTickFunction();
-      
+
       // Update label positions
       updateYearLabels();
     });
@@ -181,24 +182,28 @@ class bubbleChart {
     vis.colorScale = d3
       .scaleOrdinal()
       .domain(vis.uniqueYears)
-      .range(vis.uniqueYears.map((d, i) => d3.interpolateRainbow(i / vis.uniqueYears.length)));
-    
+      .range(
+        vis.uniqueYears.map((d, i) =>
+          d3.interpolateRainbow(i / vis.uniqueYears.length)
+        )
+      );
+
     // Create cluster centers for each unique year - MODIFIED to be closer together
     vis.clusters = {};
     const clusterCount = vis.uniqueYears.length;
-    
+
     // Arrange clusters around the center point in a tighter formation
     const centerX = vis.width / 2;
     const centerY = vis.height / 2;
     const radius = Math.min(vis.width, vis.height) / 4; // Smaller radius to keep them closer
-    
+
     vis.uniqueYears.forEach((year, i) => {
       // Position clusters in a circle around the center
       const angle = (i / clusterCount) * 2 * Math.PI;
       const x = centerX + radius * Math.cos(angle);
       const y = centerY + radius * Math.sin(angle);
-      
-      vis.clusters[year] = {x, y};
+
+      vis.clusters[year] = { x, y };
     });
 
     // use `.raise()` on the labels to keep them atop the circles
@@ -227,11 +232,11 @@ class bubbleChart {
 
     // Tooltip
     vis.tooltip = d3.select("#tooltip");
-    
+
     vis.simulation = d3
       .forceSimulation(vis.data)
-      .force("cluster", d3.forceX(d => vis.clusters[d.year].x).strength(0.3))
-      .force("y", d3.forceY(d => vis.clusters[d.year].y).strength(0.3))
+      .force("cluster", d3.forceX((d) => vis.clusters[d.year].x).strength(0.3))
+      .force("y", d3.forceY((d) => vis.clusters[d.year].y).strength(0.3))
       .force(
         "collide",
         d3.forceCollide((d) => vis.rScale(d.count_of_ref) + 2)
@@ -316,7 +321,7 @@ class bubbleChart {
       // y-scale based on count_of_ref
       const yScale = d3
         .scaleLinear()
-        .domain(d3.extent(vis.data, d => d.count_of_ref))
+        .domain(d3.extent(vis.data, (d) => d.count_of_ref))
         .clamp(true)
         .range([vis.height, 30]);
 
@@ -341,9 +346,9 @@ class bubbleChart {
 
       // Add new y-axis
       // Generate dynamic tick values based on the data's extent and a desired tick count
-      let yMin = d3.min(vis.data, d => d.count_of_ref);
-      let yMax = d3.max(vis.data, d => d.count_of_ref);
-      let tickCount = 8; 
+      let yMin = d3.min(vis.data, (d) => d.count_of_ref);
+      let yMax = d3.max(vis.data, (d) => d.count_of_ref);
+      let tickCount = 8;
       let yAxis = d3
         .axisLeft(yScale)
         .tickValues(d3.ticks(yMin, yMax, tickCount));
@@ -391,11 +396,7 @@ class bubbleChart {
           });
         });
 
-        vis.labels
-          .transition()
-          .duration(300)
-          .style("opacity", 0); 
-
+      vis.labels.transition().duration(300).style("opacity", 0);
     });
     // "Packed" layout button
     d3.select("#packed-button").on("click", () => {
@@ -405,7 +406,7 @@ class bubbleChart {
       // Remove axes
       vis.chart.selectAll(".x-axis").remove();
       vis.chart.selectAll(".y-axis").remove();
-      
+
       // Stop any existing simulation
       vis.simulation.stop();
 
@@ -418,49 +419,71 @@ class bubbleChart {
       vis.circles
         .transition()
         .duration(400)
-        .attr("cx", d => centerX + (Math.random() - 0.5) * 50) // Add slight randomness
-        .attr("cy", d => centerY + (Math.random() - 0.5) * 50) // Add slight randomness
-        .attr("r", d => vis.rScale(d.count_of_ref))
-        .attr("fill", d => vis.colorScale(d.year))
-        .on("end", function() {
+        .attr("cx", (d) => centerX + (Math.random() - 0.5) * 50) // Add slight randomness
+        .attr("cy", (d) => centerY + (Math.random() - 0.5) * 50) // Add slight randomness
+        .attr("r", (d) => vis.rScale(d.count_of_ref))
+        .attr("fill", (d) => vis.colorScale(d.year))
+        .on("end", function () {
           // After bubbles have gathered near center, start the force simulation
-          
+
           // Reset the forces with gentler settings
           vis.simulation
-            .force("cluster", d3.forceX(d => vis.clusters[d.year].x).strength(0.1)) // Start with very low strength
-            .force("y", d3.forceY(d => vis.clusters[d.year].y).strength(0.1)) 
+            .force(
+              "cluster",
+              d3.forceX((d) => vis.clusters[d.year].x).strength(0.1)
+            ) // Start with very low strength
+            .force("y", d3.forceY((d) => vis.clusters[d.year].y).strength(0.1))
             .force(
               "collide",
-              d3.forceCollide(d => vis.rScale(d.count_of_ref) + 2).iterations(3) // More iterations for smoother collision
+              d3
+                .forceCollide((d) => vis.rScale(d.count_of_ref) + 2)
+                .iterations(3) // More iterations for smoother collision
             )
             .force("center", d3.forceCenter(centerX, centerY).strength(0.05))
             // Add a force to push bubbles below a minimum y threshold
-            .force("limit-top", d3.forceY(d => {
-              const minY = 40 + vis.rScale(d.count_of_ref);
-              return d.y < minY ? minY : d.y;
-            }).strength(1))
+            .force(
+              "limit-top",
+              d3
+                .forceY((d) => {
+                  const minY = 40 + vis.rScale(d.count_of_ref);
+                  return d.y < minY ? minY : d.y;
+                })
+                .strength(1)
+            )
             .alpha(0.6) // Lower alpha for less energetic motion
             .alphaDecay(0.02) // Slower decay for smoother movement
             .restart();
-          
+
           // Gradually increase force strength in stages
           setTimeout(() => {
             vis.simulation
-              .force("cluster", d3.forceX(d => vis.clusters[d.year].x).strength(0.3))
-              .force("y", d3.forceY(d => vis.clusters[d.year].y).strength(0.3))
+              .force(
+                "cluster",
+                d3.forceX((d) => vis.clusters[d.year].x).strength(0.3)
+              )
+              .force(
+                "y",
+                d3.forceY((d) => vis.clusters[d.year].y).strength(0.3)
+              )
               .alpha(0.4)
               .restart();
           }, 400);
-          
+
           setTimeout(() => {
             vis.simulation
-              .force("cluster", d3.forceX(d => vis.clusters[d.year].x).strength(0.6))
-              .force("y", d3.forceY(d => vis.clusters[d.year].y).strength(0.6))
+              .force(
+                "cluster",
+                d3.forceX((d) => vis.clusters[d.year].x).strength(0.6)
+              )
+              .force(
+                "y",
+                d3.forceY((d) => vis.clusters[d.year].y).strength(0.6)
+              )
               .alpha(0.3)
               .restart();
           }, 800);
         });
-      
+
       // Show labels with delay
       vis.labels
         .transition()
@@ -472,7 +495,7 @@ class bubbleChart {
       setTimeout(() => {
         // Add year labels
         vis.addYearLabels();
-        
+
         // Draw the legend
         drawSizeLegend(vis);
       }, 800);
