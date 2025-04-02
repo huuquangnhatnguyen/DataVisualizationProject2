@@ -12,8 +12,16 @@ let timeExtent;
 
 function nearPointsSearch(data, time) {
   const date = new Date(time);
-  const previousDate = date.getDate() - 1;
-  const nextDate = date.setDate(date.getDate() + 1).toLocaleString();
+  const previousDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate() - 1
+  );
+  const nextDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate() + 1
+  );
 
   const sameDateData = data.filter((d) => {
     const tempDate = new Date(d.time).toLocaleDateString();
@@ -21,7 +29,21 @@ function nearPointsSearch(data, time) {
       return d;
     }
   });
-  return sameDateData;
+
+  const prevDateData = data.filter((d) => {
+    const tempDate = new Date(d.time).toLocaleDateString();
+    if (tempDate === previousDate.toLocaleDateString()) {
+      return d;
+    }
+  });
+
+  const nextDateData = data.filter((d) => {
+    const tempDate = new Date(d.time).toLocaleDateString();
+    if (tempDate === nextDate.toLocaleDateString()) {
+      return d;
+    }
+  });
+  return { sameDateData, prevDateData, nextDateData };
 }
 
 function createBubbleChartData(data) {
@@ -94,9 +116,9 @@ function filterDataByTime(data, time) {
 }
 
 function filterDataByYear(data, year) {
-  const res = data;
+  let res = data;
   if (year) {
-    res = data.filter((d) => d.year === year);
+    res = data.filter((d) => d.year == year);
   }
   return res;
 }
@@ -128,6 +150,7 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       mag: [],
       depth: [],
       time: [],
+      year: "",
     };
     const filteredData = (data) => {
       let res = data;
@@ -142,6 +165,9 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       }
       if (filters.time.length) {
         res = filterDataByTime(res, filters.time);
+      }
+      if (filters.year) {
+        res = filterDataByYear(res, filters.year);
       }
       return res;
     };
@@ -211,10 +237,15 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     );
 
     const handleMapPointHover = (time, event) => {
-      const searchedData = nearPointsSearch(data, time);
+      const { sameDateData, prevDateData, nextDateData } = nearPointsSearch(
+        data,
+        time
+      );
       const MapPointHoverEvent = new CustomEvent("mapPointHover", {
         detail: {
-          searchedData: searchedData,
+          sameDateData: sameDateData,
+          prevDateData: prevDateData,
+          nextDateData: nextDateData,
         },
       });
       document.dispatchEvent(MapPointHoverEvent);
@@ -286,6 +317,19 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       hoverColor: "var(--selection-color)",
       onBinSelected: handleBinSelected,
     });
+    // filter data by year
+    const handleYearChange = (event) => {
+      const selectedYear = event.target.value;
+      filters.year = selectedYear;
+      // const dataByYear = filterDataByYear(data, selectedYear);
+      const yearChangeEvent = new CustomEvent("dataFilterChange", {
+        detail: {
+          filteredData: filteredData(data, filters),
+          enableHoverEffect: true,
+        },
+      });
+      document.dispatchEvent(yearChangeEvent);
+    };
 
     // filter data by continent
     const handleContinentChange = (event) => {
@@ -358,6 +402,9 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     document
       .getElementById("continent-selector")
       .addEventListener("change", handleContinentChange);
+    document
+      .getElementById("year-select")
+      .addEventListener("change", handleYearChange);
   });
 
 document
