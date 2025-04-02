@@ -321,10 +321,12 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
     const handleYearChange = (event) => {
       const selectedYear = event.target.value;
       filters.year = selectedYear;
+      const filtered = filteredData(data, filters);
       // const dataByYear = filterDataByYear(data, selectedYear);
       const yearChangeEvent = new CustomEvent("dataFilterChange", {
         detail: {
-          filteredData: filteredData(data, filters),
+          bubbleData: createBubbleChartData(filtered),
+          filteredData: filtered,
           enableHoverEffect: true,
         },
       });
