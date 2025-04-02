@@ -145,6 +145,18 @@ class LeafletMap {
     }
   }
 
+  hoverDotEffect() {
+    const vis = this;
+    vis.Dots = vis.svg
+      .selectAll("circle")
+      .join("circle")
+      .attr("fill", (d) =>
+        vis.hoverSet.has(d.id) ? "red" : vis.colorScale(d.mag)
+      )
+
+      .attr("r", (d) => (vis.hoverSet.has(d.id) ? 5 : 3)); //change radius
+  }
+
   renderDots(newData) {
     let vis = this;
     vis.data = newData;
@@ -195,6 +207,7 @@ class LeafletMap {
             </div>`
           );
         vis.config.onHoverHandler(d.time);
+        // vis.hoverDotEffect();
       })
       .on("mousemove", (event) => {
         //position the tooltip

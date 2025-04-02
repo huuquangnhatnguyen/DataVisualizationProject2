@@ -93,6 +93,13 @@ function filterDataByTime(data, time) {
   return data;
 }
 
+function filterDataByYear(data, year) {
+  const res = data;
+  if (year) {
+    res = data.filter((d) => d.year === year);
+  }
+  return res;
+}
 const mapSelectEventListener = (event) => {
   // Get the selected value from the dropdown
   const selectedValue = event.target.value;
@@ -196,7 +203,7 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       {
         parentElement: "#bubble-chart",
         containerWidth: 1200,
-        containerHeight: 800,
+        containerHeight: 900,
         margin: { top: 40, right: 20, bottom: 40, left: 60 },
         onBubbleSelect: handleBubbleSelect,
       },
@@ -311,8 +318,18 @@ d3.csv("data/2014-2025earthquakes.csv") //**** TO DO  switch this to loading the
       magChart.updateSelectedBins([]);
       depthChart.updateSelectedBins([]);
 
-      // Update map with full opacity
-      leafletMap.updateVis(null, selectedBins);
+      filters = {
+        continent: "",
+        mag: [],
+        depth: [],
+        time: [],
+      };
+      const continentChangeEvent = new CustomEvent("dataFilterChange", {
+        detail: {
+          filteredData: filteredData(data, filters),
+        },
+      });
+      document.dispatchEvent(continentChangeEvent);
     }
 
     // Update visualizations when the slider value changes
