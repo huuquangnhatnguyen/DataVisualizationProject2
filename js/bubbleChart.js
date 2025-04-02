@@ -78,7 +78,7 @@ class bubbleChart {
       .attr("text-anchor", "middle")
       .style("font-size", "30px")
       .style("font-weight", "bold")
-      .text("Number of Earthquakes per Month 2024 - 2025");
+      .text("Number of Earthquakes per Month 2014 - 2025");
 
     // Append a <g> element that will contain our actual chart
     vis.chart = vis.svg
